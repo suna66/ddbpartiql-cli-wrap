@@ -18,4 +18,20 @@ export default class FileReader {
         this.lineNum = 0;
         return true;
     }
+
+    read(): string {
+        if (this.lines.length == this.lineNum) {
+            return undefined;
+        }
+        return this.lines[this.lineNum++];
+    }
+
+    seekTop() {
+        this.lineNum = 0;
+    }
+
+    clear() {
+        this.lines = [];
+        this.lineNum = 0;
+    }
 }
