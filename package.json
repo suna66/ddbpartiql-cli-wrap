@@ -6,6 +6,9 @@
   "scripts": {
     "build": "rollup -c --environment BUILD:production"
   },
+  "bin": {
+    "ddbpariql": "./bin/cli.js"
+  },
   "keywords": [
     "dynamodb",
     "partiql",
