@@ -13,11 +13,11 @@ type OptionType = {
     profile: undefined | string;
     region: undefined | string;
     script: undefined | string;
+    debug: undefined | boolean;
 };
 
-const DEBUG = true;
+let DEBUG = true;
 const DELIMITTER = " ";
-const AWS_CLI_DDB_STATEMENT = "aws dynamodb execute-statement --statement";
 
 function checkInput(input: string): InputType {
     if (input == undefined) {
@@ -66,16 +66,27 @@ async function executePartiQL(db: DynamoDBAccessor, sql: string) {
     }
 }
 
-async function prompt(profile: string, region: string) {
+async function prompt(option: OptionType) {
     let command = "";
     let input = "";
+    let scriptMode = false;
 
-    const db: DynamoDBAccessor = new DynamoDBAccessor(profile, region);
+    const db: DynamoDBAccessor = new DynamoDBAccessor(
+        option.profile,
+        option.region
+    );
 
+    if (option.script != undefined) {
+        scriptMode = true;
+    }
+
+    DEBUG = option.debug;
     while (1) {
-        input = await keyInput("DDBPartiQL> ");
-        if (input == undefined) {
-            continue;
+        if (!scriptMode) {
+            input = await keyInput("DDBPartiQL> ");
+            if (input == undefined) {
+                continue;
+            }
         }
         input = convString(input);
         if (input.length == 0) {
@@ -94,27 +105,31 @@ async function prompt(profile: string, region: string) {
     }
 }
 
-function options(argv: minimist.ParsedArgs): OptionType {
+function commandOptions(argv: minimist.ParsedArgs): OptionType {
     let profile = undefined;
     let region = undefined;
     let script = undefined;
+    let debug = false;
     if (argv["p"] != undefined) {
         profile = argv["p"];
     }
     if (argv["r"] != undefined) {
         region = argv["r"];
     }
+    if (argv["v"] != undefined) {
+        debug = argv["v"] == "true" ? true : false;
+    }
     const cmdlines = argv._;
     if (cmdlines.length > 0) {
         script = cmdlines[0];
     }
-    return { profile, region, script };
+    return { profile, region, script, debug };
 }
 
 (function () {
     const argv = minimist(process.argv.slice(2));
-    const { profile, region, script } = options(argv);
-    prompt(profile, region)
+    const op = commandOptions(argv);
+    prompt(op)
         .then(() => {
             process.exit(0);
         })
