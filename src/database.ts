@@ -1,14 +1,26 @@
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
     ExecuteStatementCommand,
 } from "@aws-sdk/lib-dynamodb";
 
+export type DynamoDBConfig = {
+    endpoint: string | undefined;
+    profile: string | undefined;
+    credentials:
+        | {
+              accessKeyId: string | undefined;
+              secretAccessKey: string | undefined;
+          }
+        | undefined;
+    region: string | undefined;
+};
+
 export default class DynamoDBAccessor {
     docClient: DynamoDBDocumentClient = undefined;
 
-    constructor(profile: string, region: string) {
-        const client = new DynamoDBClient({ region: region, profile: profile });
+    constructor(config: DynamoDBConfig) {
+        const client = new DynamoDBClient(config);
         this.docClient = DynamoDBDocumentClient.from(client);
     }
 

@@ -12,5 +12,6 @@ ddbpariql [OPTIONS]
 OPTIONS:
     -p <profile>           aws profile name
     -r <region>            aws region name
+    -v <true/false>        verbose mode
 ```
 
