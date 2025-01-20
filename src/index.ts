@@ -6,6 +6,7 @@ import minimist from "minimist";
 enum InputType {
     TYPE_CONTINUE = 0,
     TYPE_RUN = 1,
+    TYPE_COMMENT = 2,
     TYPE_END = 9,
 }
 
@@ -30,6 +31,9 @@ function checkInput(input: string): InputType {
 
     if (cmd.length == 0) {
         InputType.TYPE_CONTINUE;
+    }
+    if (cmd[0] == "#" || cmd[0] == "-") {
+        return InputType.TYPE_COMMENT;
     }
     if (cmd[cmd.length - 1] == ";") {
         return InputType.TYPE_RUN;
@@ -120,17 +124,23 @@ async function prompt(option: OptionType): Promise<number> {
             continue;
         }
         const type = checkInput(input);
+        if (type == InputType.TYPE_COMMENT) {
+            continue;
+        }
         if (type == InputType.TYPE_END) {
             if (DEBUG) console.log("----END----");
             break;
         }
         command += input;
+        command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            if (DEBUG) console.log("----EXECUTE PartiQL----");
+            if (DEBUG) {
+                console.log("----EXECUTE PartiQL----");
+                console.log(command);
+            }
             await executePartiQL(db, semicolonToBlank(command));
             command = "";
         }
-        command += DELIMITTER;
     }
     return 0;
 }

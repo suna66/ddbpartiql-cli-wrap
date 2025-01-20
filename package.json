@@ -1,5 +1,5 @@
 {
-  "name": "ddbpartiql-wrap",
+  "name": "@suna66/ddbpartiql-wrap",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
