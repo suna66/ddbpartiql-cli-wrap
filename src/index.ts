@@ -41,10 +41,11 @@ function checkInput(input: string): InputType {
     return InputType.TYPE_CONTINUE;
 }
 
-function convString(src: string): string {
-    src = src.trim();
-    const res = src.replace(/\"/g, "'");
-    return res;
+function trimStr(src: string): string {
+    if (src == undefined) {
+        return "";
+    }
+    return src.trim();
 }
 
 function semicolonToBlank(src: string): string {
@@ -74,12 +75,17 @@ async function prompt(option: OptionType): Promise<number> {
     let scriptMode = false;
     let fileRreader = undefined;
 
-    let config: DynamoDBConfig = {
-        endpoint: option.endpoint,
-        credentials: {
+    let credentials = undefined;
+    if (option.accessKey != undefined && option.secretAccessKey != undefined) {
+        credentials = {
             accessKeyId: option.accessKey,
             secretAccessKey: option.secretAccessKey,
-        },
+        };
+    }
+
+    let config: DynamoDBConfig = {
+        endpoint: option.endpoint,
+        credentials: credentials,
         profile: option.profile,
         region: option.region,
     };
@@ -109,7 +115,7 @@ async function prompt(option: OptionType): Promise<number> {
             }
             if (DEBUG) console.log(input);
         }
-        input = convString(input);
+        input = trimStr(input);
         if (input.length == 0) {
             continue;
         }

@@ -7,10 +7,12 @@ import {
 export type DynamoDBConfig = {
     endpoint: string | undefined;
     profile: string | undefined;
-    credentials: {
-        accessKeyId: string | undefined;
-        secretAccessKey: string | undefined;
-    };
+    credentials:
+        | {
+              accessKeyId: string | undefined;
+              secretAccessKey: string | undefined;
+          }
+        | undefined;
     region: string | undefined;
 };
 
