@@ -63,10 +63,10 @@ async function executePartiQL(db: DynamoDBAccessor, sql: string) {
         const response = await db.execute(sql);
         if (DEBUG) console.log("%o", response);
 
-        if (response != undefined && response.Items != undefined) {
-            for (let item of response.Items) {
-                console.log("%o", item);
-            }
+	const meta = response["$metadata"];
+	console.log("http statuc code: ", meta.httpStatusCode);
+        if (response.Items != undefined) {
+            console.log(JSON.stringify(response.Items, null, 2));
         }
     } catch (e) {
         console.error(e.toString());
