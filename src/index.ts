@@ -63,10 +63,10 @@ async function executePartiQL(db: DynamoDBAccessor, sql: string) {
         const response = await db.execute(sql);
         if (DEBUG) console.log("%o", response);
 
-        if (response != undefined && response.Items != undefined) {
-            for (let item of response.Items) {
-                console.log("%o", item);
-            }
+	const meta = response["$metadata"];
+	console.log("http statuc code: ", meta.httpStatusCode);
+        if (response.Items != undefined) {
+            console.log(JSON.stringify(response.Items, null, 2));
         }
     } catch (e) {
         console.error(e.toString());
@@ -105,7 +105,6 @@ async function prompt(option: OptionType): Promise<number> {
         }
     }
 
-    DEBUG = option.debug;
     while (1) {
         if (!scriptMode) {
             input = await keyInput("DDBPartiQL> ");
@@ -189,6 +188,8 @@ function commandOptions(argv: minimist.ParsedArgs): OptionType {
 (function () {
     const argv = minimist(process.argv.slice(2));
     const op = commandOptions(argv);
+    DEBUG = op.debug;
+    if (DEBUG) console.log(op);
     prompt(op)
         .then((ret) => {
             process.exit(ret);

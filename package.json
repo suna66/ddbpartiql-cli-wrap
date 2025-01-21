@@ -1,11 +1,15 @@
 {
   "name": "@suna66/ddbpartiql-wrap",
   "version": "0.1.0",
-  "description": "",
+  "description": "partiql cli for dynamodb",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c --environment BUILD:production"
   },
+  "files": [
+    "bin",
+    "dist"
+  ], 
   "bin": {
     "ddbpariql": "./bin/cli.js"
   },
@@ -16,7 +20,12 @@
     "wrapper"
   ],
   "author": "suna66",
+  "homepage": "https://github.com/suna66/ddbpartiql-cli-wrap/",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/suna66/ddbpartiql-cli-wrap.git"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.2",
     "@rollup/plugin-json": "^6.1.0",
