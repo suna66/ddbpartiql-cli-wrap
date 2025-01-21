@@ -105,7 +105,6 @@ async function prompt(option: OptionType): Promise<number> {
         }
     }
 
-    DEBUG = option.debug;
     while (1) {
         if (!scriptMode) {
             input = await keyInput("DDBPartiQL> ");
@@ -189,6 +188,8 @@ function commandOptions(argv: minimist.ParsedArgs): OptionType {
 (function () {
     const argv = minimist(process.argv.slice(2));
     const op = commandOptions(argv);
+    DEBUG = op.debug;
+    if (DEBUG) console.log(op);
     prompt(op)
         .then((ret) => {
             process.exit(ret);
