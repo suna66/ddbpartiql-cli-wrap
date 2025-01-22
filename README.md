@@ -10,6 +10,7 @@ PartiQL front-end wrapper tool for DynamoDB
 ddbpariql [OPTIONS] [scritp file]
 
 OPTIONS:
+    -h                          printing how to use 
     -p <profile>                aws profile name
     -r <region>                 aws region name
     -v <true/false>             verbose mode

@@ -22,6 +22,20 @@ type OptionType = {
 
 let DEBUG = true;
 const DELIMITTER = " ";
+const VERSION="0.1.0";
+const help = `
+version: ${VERSION}
+ddbpariql [OPTIONS] [scritp file]
+
+OPTIONS:
+    -h                          printing how to use
+    -p <profile>                aws profile name
+    -r <region>                 aws region name
+    -v <true/false>             verbose mode
+    --endpoint <url>            endpoint url
+    --access_key <value>        aws credential access key id
+    --secret_access_key <value> aws credential secret access key
+`;
 
 function checkInput(input: string): InputType {
     if (input == undefined) {
@@ -57,7 +71,7 @@ function semicolonToBlank(src: string): string {
     return res;
 }
 
-async function executePartiQL(db: DynamoDBAccessor, sql: string) {
+async function executePartiQL(db: DynamoDBAccessor, sql: string): Promise<boolean> {
     try {
         if (DEBUG) console.log(sql);
         const response = await db.execute(sql);
@@ -70,7 +84,9 @@ async function executePartiQL(db: DynamoDBAccessor, sql: string) {
         }
     } catch (e) {
         console.error(e.toString());
+        return false;
     }
+    return true;
 }
 
 async function prompt(option: OptionType): Promise<number> {
@@ -137,14 +153,18 @@ async function prompt(option: OptionType): Promise<number> {
                 console.log("----EXECUTE PartiQL----");
                 console.log(command);
             }
-            await executePartiQL(db, semicolonToBlank(command));
+            const ok = await executePartiQL(db, semicolonToBlank(command));
+            if (!ok && scriptMode) {
+                if (DEBUG) console.error("error for script mode");
+                return -1;
+            }
             command = "";
         }
     }
     return 0;
 }
 
-function commandOptions(argv: minimist.ParsedArgs): OptionType {
+function commandOptions(argv: minimist.ParsedArgs): OptionType | undefined {
     let profile = undefined;
     let region = undefined;
     let endpoint = undefined;
@@ -152,6 +172,10 @@ function commandOptions(argv: minimist.ParsedArgs): OptionType {
     let secretAccessKey = undefined;
     let script = undefined;
     let debug = false;
+    if (argv["h"] != undefined) {
+        console.log(help);
+        return undefined;
+    }
     if (argv["p"] != undefined) {
         profile = argv["p"];
     }
@@ -188,6 +212,9 @@ function commandOptions(argv: minimist.ParsedArgs): OptionType {
 (function () {
     const argv = minimist(process.argv.slice(2));
     const op = commandOptions(argv);
+    if (op == undefined) {
+        process.exit(0);
+    }
     DEBUG = op.debug;
     if (DEBUG) console.log(op);
     prompt(op)
