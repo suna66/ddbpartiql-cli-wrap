@@ -12,7 +12,7 @@
     "dist"
   ], 
   "bin": {
-    "ddbpariql": "./bin/cli.js"
+    "ddbpartiql": "./bin/cli.js"
   },
   "keywords": [
     "dynamodb",

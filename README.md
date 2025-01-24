@@ -16,7 +16,7 @@ $ npm install -g .
 ## Command
 
 ```bash
-ddbpariql [OPTIONS] [scritp file]
+ddbpartiql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h                          printing how to use 

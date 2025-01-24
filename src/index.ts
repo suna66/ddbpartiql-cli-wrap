@@ -25,7 +25,7 @@ const DELIMITTER = " ";
 const VERSION="0.1.0";
 const help = `
 version: ${VERSION}
-ddbpariql [OPTIONS] [scritp file]
+ddbpartiql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h                          printing how to use
