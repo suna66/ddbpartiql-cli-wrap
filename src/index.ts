@@ -7,6 +7,7 @@ enum InputType {
     TYPE_CONTINUE = 0,
     TYPE_RUN = 1,
     TYPE_COMMENT = 2,
+    TYPE_CLEAR = 3,
     TYPE_END = 9,
 }
 
@@ -54,6 +55,9 @@ function checkInput(input: string): InputType {
     }
     if (cmd == "exit") {
         return InputType.TYPE_END;
+    }
+    if (cmd == "clear") {
+        return InputType.TYPE_CLEAR;
     }
 
     return InputType.TYPE_CONTINUE;
@@ -145,6 +149,12 @@ async function prompt(option: OptionType): Promise<number> {
         if (type == InputType.TYPE_END) {
             if (DEBUG) console.log("----END----");
             break;
+        }
+        if (type == InputType.TYPE_CLEAR) {
+            if (DEBUG) console.log("----CLEAR----");
+            console.clear();
+            command = "";
+            continue;
         }
         command += input;
         command += DELIMITTER;
