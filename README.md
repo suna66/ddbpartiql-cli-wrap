@@ -69,8 +69,21 @@ ddbpartiql> delete from "ddb-test-table" where id=10 and name='name1';
 ddbpartiql> desc "ddb-test-table";
 ```
 
+#### Clear prompt
+
+```bash
+ddbpartiql> clear
+```
+
 #### Exit partiql prompt
 
 ```bash
 ddbpartiql> exit
+```
+
+#### Simple variable system
+
+```bash
+ddbpartiql> @variable = ddb-test-table;
+ddbpartiql> select * from "${variable}"
 ```
