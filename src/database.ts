@@ -1,7 +1,12 @@
-import { DynamoDBClient, DynamoDBClientConfig } from "@aws-sdk/client-dynamodb";
+import {
+    DynamoDBClient,
+    DescribeTableCommand,
+    DescribeTableCommandOutput,
+} from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
     ExecuteStatementCommand,
+    ExecuteStatementCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 
 export type DynamoDBConfig = {
@@ -24,11 +29,21 @@ export default class DynamoDBAccessor {
         this.docClient = DynamoDBDocumentClient.from(client);
     }
 
-    async execute(sql: string) {
+    async execute(sql: string): Promise<ExecuteStatementCommandOutput> {
         const statement = new ExecuteStatementCommand({
             Statement: sql,
         });
         const response = await this.docClient.send(statement);
+
+        return response;
+    }
+
+    async describe(tableName: string): Promise<DescribeTableCommandOutput> {
+        const command = new DescribeTableCommand({
+            TableName: tableName,
+        });
+
+        const response = await this.docClient.send(command);
 
         return response;
     }

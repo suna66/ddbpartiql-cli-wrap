@@ -1,6 +1,7 @@
 import { keyInput } from "./input";
 import DynamoDBAccessor, { DynamoDBConfig } from "./database";
 import FileReader from "./file_reader";
+import { Lex } from "./lex";
 import { OptionType, InputType, DELIMITTER } from "./types";
 
 let DEBUG = true;
@@ -61,6 +62,52 @@ async function executePartiQL(
         return false;
     }
     return true;
+}
+
+async function executeDesc(
+    db: DynamoDBAccessor,
+    cmd: string
+): Promise<boolean> {
+    const lex = new Lex(cmd);
+
+    let txt = lex.next();
+    if (txt.toUpperCase() != "DESC") {
+        console.error("DESC query error");
+        return false;
+    }
+    txt = lex.next();
+    if (txt == undefined) {
+        console.error("undefined table name");
+        return false;
+    }
+    try {
+        const response = await db.describe(txt);
+        if (response != undefined && response.Table != undefined) {
+            console.log(JSON.stringify(response.Table, null, 2));
+        }
+    } catch (e) {
+        console.error(e.toString());
+        return false;
+    }
+
+    return true;
+}
+
+async function executeCommand(
+    db: DynamoDBAccessor,
+    cmd: string
+): Promise<boolean> {
+    let ret = false;
+    if (DEBUG) {
+        console.log("----EXECUTE COMMAND----");
+        console.log(cmd);
+    }
+    if (cmd.startsWith("desc") || cmd.startsWith("DESC")) {
+        ret = await executeDesc(db, cmd);
+    } else {
+        ret = await executePartiQL(db, cmd);
+    }
+    return ret;
 }
 
 export async function Prompt(option: OptionType): Promise<number> {
@@ -131,11 +178,7 @@ export async function Prompt(option: OptionType): Promise<number> {
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            if (DEBUG) {
-                console.log("----EXECUTE PartiQL----");
-                console.log(command);
-            }
-            const ok = await executePartiQL(db, semicolonToBlank(command));
+            const ok = await executeCommand(db, semicolonToBlank(command));
             if (!ok && scriptMode) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
