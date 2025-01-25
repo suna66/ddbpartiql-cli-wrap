@@ -5,7 +5,7 @@ import minimist from "minimist";
 import { Prompt } from "./prompt";
 import { OptionType } from "./types";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const help = `
 version: ${VERSION}
 ddbpartiql [OPTIONS] [scritp file]
