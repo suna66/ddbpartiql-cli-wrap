@@ -4,6 +4,8 @@
 insert into "ddb-test-table" value 
   {'id': 10, 'name': 'name1','age': 20};
 
+desc "ddb-test-table";
+
 select * from "ddb-test-table";
 
 update "ddb-test-table"

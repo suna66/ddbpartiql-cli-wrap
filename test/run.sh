@@ -14,7 +14,7 @@ docker compose up -d
 export AWS_ACCESS_KEY_ID=dummy
 export AWS_SECRET_ACCESS_KEY=dummy
 export AWS_DEFAULT_REGION=${REGION}
-# export no_proxy=localhost,127.0.0.1,[::1]
+export no_proxy=localhost,127.0.0.1,[::1]
 
 aws dynamodb create-table --cli-input-json file://${TEST_TABLE_JSON} --endpoint-url=${ENDPOINT} --no-cli-pager
 if [ $? -ne 0 ]; then
