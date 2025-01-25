@@ -3,8 +3,10 @@ import DynamoDBAccessor, { DynamoDBConfig } from "./database";
 import FileReader from "./file_reader";
 import { Lex } from "./lex";
 import { OptionType, InputType, DELIMITTER } from "./types";
+import { trimStr, semicolonToBlank, convertVariables } from "./utils";
 
 let DEBUG = true;
+let variables: { [key: string]: string | undefined } = {};
 
 function checkInput(input: string): InputType {
     if (input == undefined) {
@@ -31,24 +33,13 @@ function checkInput(input: string): InputType {
     return InputType.TYPE_CONTINUE;
 }
 
-function trimStr(src: string): string {
-    if (src == undefined) {
-        return "";
-    }
-    return src.trim();
-}
-
-function semicolonToBlank(src: string): string {
-    const res = src.replace(";", "");
-    return res;
-}
-
 async function executePartiQL(
     db: DynamoDBAccessor,
     sql: string
 ): Promise<boolean> {
     try {
-        if (DEBUG) console.log(sql);
+        sql = convertVariables(semicolonToBlank(sql), variables);
+        console.log(sql);
         const response = await db.execute(sql);
         if (DEBUG) console.log("%o", response);
 
@@ -68,6 +59,7 @@ async function executeDesc(
     db: DynamoDBAccessor,
     cmd: string
 ): Promise<boolean> {
+    cmd = convertVariables(cmd, variables);
     const lex = new Lex(cmd);
 
     let txt = lex.next();
@@ -75,13 +67,19 @@ async function executeDesc(
         console.error("DESC query error");
         return false;
     }
-    txt = lex.next();
-    if (txt == undefined) {
+    let tableName = lex.next();
+    if (tableName == undefined) {
         console.error("undefined table name");
         return false;
     }
+    txt = lex.next();
+    if (txt != ";") {
+        console.log("desc syntax error [%s]", cmd);
+        return false;
+    }
     try {
-        const response = await db.describe(txt);
+        console.log(cmd);
+        const response = await db.describe(tableName);
         if (response != undefined && response.Table != undefined) {
             console.log(JSON.stringify(response.Table, null, 2));
         }
@@ -90,6 +88,35 @@ async function executeDesc(
         return false;
     }
 
+    return true;
+}
+
+async function executeVariable(cmd: string): Promise<boolean> {
+    const lex = new Lex(cmd);
+    lex.next();
+    let key = lex.next();
+    if (key == undefined) {
+        console.error("variable name is undefined");
+        return false;
+    }
+    let txt = lex.next();
+    if (txt != "=") {
+        console.error("variable syntax error(%s)", cmd);
+        return false;
+    }
+    let value = lex.next();
+    if (value == undefined) {
+        console.error("variable syntax error(%s)", cmd);
+        return false;
+    }
+    txt = lex.next();
+    if (txt != ";") {
+        console.error("variable syntax error(%s)", cmd);
+        return false;
+    }
+    variables[key] = value;
+
+    if (DEBUG) console.log("%o", variables);
     return true;
 }
 
@@ -102,7 +129,9 @@ async function executeCommand(
         console.log("----EXECUTE COMMAND----");
         console.log(cmd);
     }
-    if (cmd.startsWith("desc") || cmd.startsWith("DESC")) {
+    if (cmd[0] == "@") {
+        ret = await executeVariable(cmd);
+    } else if (cmd.startsWith("desc") || cmd.startsWith("DESC")) {
         ret = await executeDesc(db, cmd);
     } else {
         ret = await executePartiQL(db, cmd);
@@ -117,6 +146,7 @@ export async function Prompt(option: OptionType): Promise<number> {
     let fileRreader = undefined;
 
     DEBUG = option.debug;
+    variables = {};
 
     let credentials = undefined;
     if (option.accessKey != undefined && option.secretAccessKey != undefined) {
@@ -178,7 +208,7 @@ export async function Prompt(option: OptionType): Promise<number> {
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            const ok = await executeCommand(db, semicolonToBlank(command));
+            const ok = await executeCommand(db, command);
             if (!ok && scriptMode) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
