@@ -7,6 +7,7 @@ import {
     CreateTableCommandOutput,
     DeleteTableCommand,
     DeleteTableCommandOutput,
+    ResourceNotFoundException,
 } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
@@ -38,19 +39,19 @@ export enum KeyType {
 }
 
 export enum IndexType {
-    LOCAL = "local",
-    GLOBAL = "global",
+    LOCAL = "LOCAL",
+    GLOBAL = "GLOBAL",
 }
 
 export type AttributeDefinition = {
     attributeName: string;
-    attributeType: AttributeType;
-    keyType: KeyType | undefined;
+    attributeType: AttributeType | string;
+    keyType: KeyType | string | undefined;
 };
 
 export type SecondaryIndex = {
     indexName: string;
-    indexType: IndexType;
+    indexType: IndexType | string;
     attributeDefinitinList: Array<AttributeDefinition>;
 };
 
@@ -183,12 +184,25 @@ export default class DynamoDBAccessor {
         return response;
     }
 
-    async deleteTable(tableName: string): Promise<DeleteTableCommandOutput> {
+    async deleteTable(
+        tableName: string,
+        ingnorNotFound: boolean
+    ): Promise<DeleteTableCommandOutput> {
         const command = new DeleteTableCommand({
             TableName: tableName,
         });
 
-        const response = await this.docClient.send(command);
+        let response = undefined;
+        try {
+            response = await this.docClient.send(command);
+        } catch (e) {
+            if (e instanceof ResourceNotFoundException) {
+                if (ingnorNotFound) {
+                    return undefined;
+                }
+            }
+            throw e;
+        }
 
         return response;
     }

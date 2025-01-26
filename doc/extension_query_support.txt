@@ -15,7 +15,7 @@ create table "{table name}" (
     {fieldName} {N|S|B} [HASH/RANG],
     {fieldName} {N|S|B} [HASH/RANG]
      :
-    [index {local|global} (
+    [index {local|global} {index name} (
         {fieldName} {N|S|B} [HASH/RANG],
         {fieldName} {N|S|B} [HASH/RANG]
     )]
@@ -27,5 +27,5 @@ create table "{table name}" (
 ## query format
 
 ```
-drop table [if exist] "{table name}";
+drop table [if exists] "{table name}";
 ```

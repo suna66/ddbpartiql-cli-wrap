@@ -9,6 +9,7 @@ PartiQL front-end wrapper tool for DynamoDB
 ### Build & Install
 
 ```bash
+$ npm i
 $ npm run build
 $ npm install -g .
 ```
