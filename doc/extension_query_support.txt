@@ -1,0 +1,31 @@
+# Describe table query
+
+## query format
+
+```
+desc "{table name}";
+```
+
+# Create table query
+
+## query format
+
+```
+create table "{table name}" (
+    {fieldName} {N|S|B} [HASH/RANG],
+    {fieldName} {N|S|B} [HASH/RANG]
+     :
+    [index {local|global} (
+        {fieldName} {N|S|B} [HASH/RANG],
+        {fieldName} {N|S|B} [HASH/RANG]
+    )]
+);
+```
+
+# Delete table query
+
+## query format
+
+```
+drop table [if exist] "{table name}";
+```
