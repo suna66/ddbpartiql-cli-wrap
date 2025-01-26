@@ -2,11 +2,35 @@ import { keyInput } from "./input";
 import DynamoDBAccessor, { DynamoDBConfig } from "./database";
 import FileReader from "./file_reader";
 import { Lex } from "./lex";
-import { OptionType, InputType, DELIMITTER } from "./types";
+import { OptionType, InputType, DELIMITTER, HISTORY_LIST_MAX } from "./types";
 import { trimStr, semicolonToBlank, convertVariables } from "./utils";
 
 let DEBUG = true;
 let variables: { [key: string]: string | undefined } = {};
+let historyList: Array<string> = [];
+const promptCmdHelp = `
+  !?             show help message
+  !h             show execute query history
+  !v             show variables and values
+  clear          clear console
+  exit           exit ddbpartiql cli
+`;
+
+function checkPromptCmd(cmd: string): InputType {
+    switch (cmd[1]) {
+        case "h":
+            return InputType.TYPE_SHOW_HISTORY;
+        case "c":
+            return InputType.TYPE_SHOW_CURRENT_CMD;
+        case "v":
+            return InputType.TYPE_SHOW_VARIABLES;
+        case "?":
+            return InputType.TYPE_SHOW_HELP;
+        default:
+            break;
+    }
+    return InputType.TYPE_UNKNOWN;
+}
 
 function checkInput(input: string): InputType {
     if (input == undefined) {
@@ -19,6 +43,9 @@ function checkInput(input: string): InputType {
     }
     if (cmd[0] == "#" || cmd[0] == "-") {
         return InputType.TYPE_COMMENT;
+    }
+    if (cmd[0] == "!") {
+        return checkPromptCmd(cmd);
     }
     if (cmd[cmd.length - 1] == ";") {
         return InputType.TYPE_RUN;
@@ -33,11 +60,21 @@ function checkInput(input: string): InputType {
     return InputType.TYPE_CONTINUE;
 }
 
+function addHistory(cmd: string) {
+    if (cmd != undefined) {
+        historyList.push(cmd);
+        if (historyList.length > HISTORY_LIST_MAX) {
+            historyList.shift();
+        }
+    }
+}
+
 async function executePartiQL(
     db: DynamoDBAccessor,
     sql: string
 ): Promise<boolean> {
     try {
+        let originSQL = sql;
         sql = convertVariables(semicolonToBlank(sql), variables);
         console.log(sql);
         const response = await db.execute(sql);
@@ -48,6 +85,7 @@ async function executePartiQL(
         if (response.Items != undefined) {
             console.log(JSON.stringify(response.Items, null, 2));
         }
+        addHistory(originSQL);
     } catch (e) {
         console.error(e.toString());
         return false;
@@ -59,6 +97,7 @@ async function executeDesc(
     db: DynamoDBAccessor,
     cmd: string
 ): Promise<boolean> {
+    let originCmd = cmd;
     cmd = convertVariables(cmd, variables);
     const lex = new Lex(cmd);
 
@@ -83,6 +122,7 @@ async function executeDesc(
         if (response != undefined && response.Table != undefined) {
             console.log(JSON.stringify(response.Table, null, 2));
         }
+        addHistory(originCmd);
     } catch (e) {
         console.error(e.toString());
         return false;
@@ -92,6 +132,7 @@ async function executeDesc(
 }
 
 async function executeVariable(cmd: string): Promise<boolean> {
+    let originCmd = cmd;
     const lex = new Lex(cmd);
     lex.next();
     let key = lex.next();
@@ -115,6 +156,7 @@ async function executeVariable(cmd: string): Promise<boolean> {
         return false;
     }
     variables[key] = value;
+    addHistory(originCmd);
 
     if (DEBUG) console.log("%o", variables);
     return true;
@@ -147,6 +189,7 @@ export async function Prompt(option: OptionType): Promise<number> {
 
     DEBUG = option.debug;
     variables = {};
+    historyList = [];
 
     let credentials = undefined;
     if (option.accessKey != undefined && option.secretAccessKey != undefined) {
@@ -192,19 +235,42 @@ export async function Prompt(option: OptionType): Promise<number> {
             continue;
         }
         const type = checkInput(input);
-        if (type == InputType.TYPE_COMMENT) {
-            continue;
+
+        switch (type) {
+            case InputType.TYPE_COMMENT:
+                continue;
+            case InputType.TYPE_END:
+                if (DEBUG) console.log("----END----");
+                return 0;
+            case InputType.TYPE_CLEAR:
+                if (DEBUG) console.log("----CLEAR----");
+                console.clear();
+                command = "";
+                continue;
+            case InputType.TYPE_SHOW_HISTORY:
+                if (DEBUG) console.log("----SHOW HISTORY----");
+                let index = 0;
+                for (let cmd of historyList) {
+                    console.log("[%d]: ", index++, cmd);
+                }
+                continue;
+            case InputType.TYPE_SHOW_CURRENT_CMD:
+                if (DEBUG) console.log("----SHOW CURRENT COMMAND----");
+                console.log(command);
+                continue;
+            case InputType.TYPE_SHOW_VARIABLES:
+                if (DEBUG) console.log("----SHOW VARIABLES----");
+                for (let key in variables) {
+                    console.log("[%s] = %s", key, variables[key]);
+                }
+                continue;
+            case InputType.TYPE_SHOW_HELP:
+                console.log(promptCmdHelp);
+                continue;
+            default:
+                break;
         }
-        if (type == InputType.TYPE_END) {
-            if (DEBUG) console.log("----END----");
-            break;
-        }
-        if (type == InputType.TYPE_CLEAR) {
-            if (DEBUG) console.log("----CLEAR----");
-            console.clear();
-            command = "";
-            continue;
-        }
+
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
