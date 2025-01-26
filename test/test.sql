@@ -26,6 +26,8 @@ where id=10 and name='name1';
 
 select * from "ddb-test-table";
 
+!?
+
 !h
 
 !v

@@ -8,6 +8,29 @@ import { trimStr, semicolonToBlank, convertVariables } from "./utils";
 let DEBUG = true;
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
+const systemCmdHelp = `
+  !?             show help message
+  !h             show execute query history
+  !v             show variables and values
+  clear          clear console
+  exit           exit ddbpartiql cli
+`;
+
+function checkSystemCmd(cmd: string): InputType {
+    switch (cmd[1]) {
+        case "h":
+            return InputType.TYPE_SHOW_HISTORY;
+        case "c":
+            return InputType.TYPE_SHOW_CURRENT_CMD;
+        case "v":
+            return InputType.TYPE_SHOW_VARIABLES;
+        case "?":
+            return InputType.TYPE_SHOW_HELP;
+        default:
+            break;
+    }
+    return InputType.TYPE_UNKNOWN;
+}
 
 function checkInput(input: string): InputType {
     if (input == undefined) {
@@ -22,16 +45,7 @@ function checkInput(input: string): InputType {
         return InputType.TYPE_COMMENT;
     }
     if (cmd[0] == "!") {
-        switch (cmd[1]) {
-            case "h":
-                return InputType.TYPE_SHOW_HISTORY;
-            case "c":
-                return InputType.TYPE_SHOW_CURRENT_CMD;
-            case "v":
-                return InputType.TYPE_SHOW_VARIABLES;
-            default:
-                break;
-        }
+        return checkSystemCmd(cmd);
     }
     if (cmd[cmd.length - 1] == ";") {
         return InputType.TYPE_RUN;
@@ -249,6 +263,9 @@ export async function Prompt(option: OptionType): Promise<number> {
                 for (let key in variables) {
                     console.log("[%s] = %s", key, variables[key]);
                 }
+                continue;
+            case InputType.TYPE_SHOW_HELP:
+                console.log(systemCmdHelp);
                 continue;
             default:
                 break;

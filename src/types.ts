@@ -16,7 +16,9 @@ export enum InputType {
     TYPE_SHOW_HISTORY = 10,
     TYPE_SHOW_CURRENT_CMD = 11,
     TYPE_SHOW_VARIABLES = 12,
+    TYPE_SHOW_HELP = 13,
     TYPE_END = 99,
+    TYPE_UNKNOWN = -1,
 }
 
 export const DELIMITTER = " ";
