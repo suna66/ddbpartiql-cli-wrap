@@ -8,7 +8,7 @@ import { trimStr, semicolonToBlank, convertVariables } from "./utils";
 let DEBUG = true;
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
-const systemCmdHelp = `
+const promptCmdHelp = `
   !?             show help message
   !h             show execute query history
   !v             show variables and values
@@ -16,7 +16,7 @@ const systemCmdHelp = `
   exit           exit ddbpartiql cli
 `;
 
-function checkSystemCmd(cmd: string): InputType {
+function checkPromptCmd(cmd: string): InputType {
     switch (cmd[1]) {
         case "h":
             return InputType.TYPE_SHOW_HISTORY;
@@ -45,7 +45,7 @@ function checkInput(input: string): InputType {
         return InputType.TYPE_COMMENT;
     }
     if (cmd[0] == "!") {
-        return checkSystemCmd(cmd);
+        return checkPromptCmd(cmd);
     }
     if (cmd[cmd.length - 1] == ";") {
         return InputType.TYPE_RUN;
@@ -265,7 +265,7 @@ export async function Prompt(option: OptionType): Promise<number> {
                 }
                 continue;
             case InputType.TYPE_SHOW_HELP:
-                console.log(systemCmdHelp);
+                console.log(promptCmdHelp);
                 continue;
             default:
                 break;
