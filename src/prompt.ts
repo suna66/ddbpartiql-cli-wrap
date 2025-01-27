@@ -393,6 +393,7 @@ async function executeDeleteTable(
 
 async function executeVariable(cmd: string): Promise<boolean> {
     let originCmd = cmd;
+    cmd = convertVariables(cmd, variables);
     const lex = new Lex(cmd);
     lex.next();
     let key = lex.next();
