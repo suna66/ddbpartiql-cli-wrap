@@ -1,3 +1,8 @@
+export var DEBUG = false;
+export function setDebug(flag: boolean) {
+    DEBUG = flag;
+}
+
 export function trimStr(src: string): string {
     if (src == undefined) {
         return "";

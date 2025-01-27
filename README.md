@@ -9,6 +9,7 @@ PartiQL front-end wrapper tool for DynamoDB
 ### Build & Install
 
 ```bash
+$ npm i
 $ npm run build
 $ npm install -g .
 ```
@@ -63,10 +64,22 @@ ddbpartiql> update "ddb-test-table"
 ddbpartiql> delete from "ddb-test-table" where id=10 and name='name1';
 ```
 
-#### Describe Table
+#### Describe Table(extension query)
 
 ```bash
 ddbpartiql> desc "ddb-test-table";
+```
+
+#### Create Table(extension query)
+
+```bash
+ddbpartiql> create table "test-table"(id N HASH, age N RANGE, index global "index-global"(age N HASH));
+```
+
+#### Drop Table(extension query)
+
+```bash
+ddbpartiql> drop table "test-table";
 ```
 
 #### Clear prompt
