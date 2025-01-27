@@ -1,14 +1,16 @@
-# Describe table query
+# extension query
 
-## query format
+## Describe table query
+
+### query format
 
 ```
 desc "{table name}";
 ```
 
-# Create table query
+## Create table query
 
-## query format
+### query format
 
 ```
 create table "{table name}" (
@@ -22,9 +24,9 @@ create table "{table name}" (
 );
 ```
 
-# Delete table query
+## Delete table query
 
-## query format
+### query format
 
 ```
 drop table [if exists] "{table name}";
