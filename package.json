@@ -32,17 +32,17 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^22.10.7",
+    "@types/node": "^22.10.10",
     "@types/minimist": "^1.2.5",
-    "rollup": "^4.31.0",
+    "rollup": "^4.32.0",
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-loader": "^9.5.2",
     "tslib": "^2.8.1",
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.731.1",
-    "@aws-sdk/lib-dynamodb": "^3.731.1",
+    "@aws-sdk/client-dynamodb": "^3.734.0",
+    "@aws-sdk/lib-dynamodb": "^3.734.0",
     "minimist": "^1.2.8"
   }
 }

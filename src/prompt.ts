@@ -8,6 +8,7 @@ import { trimStr, semicolonToBlank, convertVariables } from "./utils";
 let DEBUG = true;
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
+const promptLabel = "ddbpartiql> ";
 const promptCmdHelp = `
   !?             show help message
   !h             show execute query history
@@ -81,7 +82,7 @@ async function executePartiQL(
         if (DEBUG) console.log("%o", response);
 
         const meta = response["$metadata"];
-        console.log("http statuc code: ", meta.httpStatusCode);
+        console.log("http status code: ", meta.httpStatusCode);
         if (response.Items != undefined) {
             console.log(JSON.stringify(response.Items, null, 2));
         }
@@ -219,7 +220,7 @@ export async function Prompt(option: OptionType): Promise<number> {
 
     while (1) {
         if (!scriptMode) {
-            input = await keyInput("DDBPartiQL> ");
+            input = await keyInput(promptLabel);
             if (input == undefined) {
                 continue;
             }
