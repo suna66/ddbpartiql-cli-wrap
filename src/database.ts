@@ -14,6 +14,7 @@ import {
     ExecuteStatementCommand,
     ExecuteStatementCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
+import { DEBUG } from "./utils";
 
 export type DynamoDBConfig = {
     endpoint: string | undefined;
@@ -133,7 +134,7 @@ export default class DynamoDBAccessor {
                             schema.keyType == KeyType.RANGE
                         ) {
                             indexKeyScema.push({
-                                AttributName: schema.attributeName,
+                                AttributeName: schema.attributeName,
                                 KeyType: schema.keyType,
                             });
                         }
@@ -158,7 +159,7 @@ export default class DynamoDBAccessor {
                             schema.keyType == KeyType.RANGE
                         ) {
                             indexKeyScema.push({
-                                AttributName: schema.attributeName,
+                                AttributeName: schema.attributeName,
                                 KeyType: schema.keyType,
                             });
                         }
@@ -176,6 +177,8 @@ export default class DynamoDBAccessor {
         if (globalSecondaryIndexs != undefined) {
             createTableParam["GlobalSecondaryIndexes"] = globalSecondaryIndexs;
         }
+
+        if (DEBUG) console.log("%o", createTableParam);
 
         const command = new CreateTableCommand(createTableParam);
 

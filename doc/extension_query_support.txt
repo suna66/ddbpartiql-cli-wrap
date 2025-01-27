@@ -12,12 +12,12 @@ desc "{table name}";
 
 ```
 create table "{table name}" (
-    {fieldName} {N|S|B} [HASH/RANG],
-    {fieldName} {N|S|B} [HASH/RANG]
+    {fieldName} {N|S|B} [HASH/RANGE],
+    {fieldName} {N|S|B} [HASH/RANGE]
      :
     [index {local|global} {index name} (
-        {fieldName} {N|S|B} [HASH/RANG],
-        {fieldName} {N|S|B} [HASH/RANG]
+        {fieldName} {N|S|B} {HASH/RANGE},
+        {fieldName} {N|S|B} {HASH/RANGE}
     )]
 );
 ```

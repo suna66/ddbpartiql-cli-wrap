@@ -10,10 +10,15 @@ import DynamoDBAccessor, {
 import FileReader from "./file_reader";
 import { Lex } from "./lex";
 import { OptionType, InputType, DELIMITTER, HISTORY_LIST_MAX } from "./types";
-import { trimStr, semicolonToBlank, convertVariables } from "./utils";
+import {
+    trimStr,
+    semicolonToBlank,
+    convertVariables,
+    DEBUG,
+    setDebug,
+} from "./utils";
 import { KeyType } from "@aws-sdk/client-dynamodb";
 
-let DEBUG = true;
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
 const promptLabel = "ddbpartiql> ";
@@ -89,10 +94,12 @@ async function executePartiQL(
         const response = await db.execute(sql);
         if (DEBUG) console.log("%o", response);
 
-        const meta = response["$metadata"];
-        console.log("http status code: ", meta.httpStatusCode);
-        if (response.Items != undefined) {
-            console.log(JSON.stringify(response.Items, null, 2));
+        if (response != undefined) {
+            const meta = response["$metadata"];
+            console.log("http status code: ", meta.httpStatusCode);
+            if (response.Items != undefined) {
+                console.log(JSON.stringify(response.Items, null, 2));
+            }
         }
         addHistory(originSQL);
     } catch (e) {
@@ -128,8 +135,12 @@ async function executeDesc(
     try {
         console.log(cmd);
         const response = await db.describe(tableName);
-        if (response != undefined && response.Table != undefined) {
-            console.log(JSON.stringify(response.Table, null, 2));
+        if (response != undefined) {
+            const meta = response["$metadata"];
+            console.log("http status code: ", meta.httpStatusCode);
+            if (response.Table != undefined) {
+                console.log(JSON.stringify(response.Table, null, 2));
+            }
         }
         addHistory(originCmd);
     } catch (e) {
@@ -157,6 +168,7 @@ async function executeCreateTable(
     }
     let tableName = lex.next();
     if (tableName == undefined) {
+        if (DEBUG) console.error("undefined table name");
         console.error("create table syntax error [%s]", cmd);
         return false;
     }
@@ -174,12 +186,14 @@ async function executeCreateTable(
             txt = lex.next();
             txt = txt.toUpperCase();
             if (txt != IndexType.LOCAL && txt != IndexType.GLOBAL) {
+                if (DEBUG) console.error("illegal index type for INDEX");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
             let indexType = txt;
             let indexName = lex.next();
             if (indexName == undefined) {
+                if (DEBUG) console.error("undefined index name for INDEX");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
@@ -195,6 +209,8 @@ async function executeCreateTable(
                 let attrName = txt;
                 txt = lex.next();
                 if (txt == undefined) {
+                    if (DEBUG)
+                        console.error("undefined attribute type for INDEX");
                     console.error("create table syntax error [%s]", cmd);
                     return false;
                 }
@@ -204,17 +220,22 @@ async function executeCreateTable(
                     txt != AttributeType.STRING &&
                     txt != AttributeType.BINALY
                 ) {
+                    if (DEBUG)
+                        console.error("illegal attribute type for INDEX");
                     console.error("create table syntax error [%s]", cmd);
                     return false;
                 }
                 let attrType = txt;
                 txt = lex.next();
                 if (txt == undefined) {
+                    if (DEBUG)
+                        console.error("undefiend attribute type for INDEX");
                     console.error("create table syntax error [%s]", cmd);
                     return false;
                 }
                 txt = txt.toUpperCase();
                 if (txt != KeyType.HASH && txt != KeyType.RANGE) {
+                    if (DEBUG) console.error("illegal key type for INDEX");
                     console.error("create table syntax error [%s]", cmd);
                     return false;
                 }
@@ -229,6 +250,7 @@ async function executeCreateTable(
                     break;
                 }
                 if (txt != ",") {
+                    if (DEBUG) console.error("no camma end for INDEX");
                     console.error("create table syntax error [%s]", cmd);
                     return false;
                 }
@@ -241,11 +263,13 @@ async function executeCreateTable(
         } else {
             let attrName = txt;
             if (attrName == undefined) {
+                if (DEBUG) console.error("undefined attribute name");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
             txt = lex.next();
             if (txt == undefined) {
+                if (DEBUG) console.error("undefined attribute type");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
@@ -255,12 +279,14 @@ async function executeCreateTable(
                 txt != AttributeType.STRING &&
                 txt != AttributeType.BINALY
             ) {
+                if (DEBUG) console.error("illegal attribute tyep");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
             let attrType = txt;
             txt = lex.next();
             if (txt == undefined) {
+                if (DEBUG) console.error("undefined attribyte type");
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
@@ -278,6 +304,7 @@ async function executeCreateTable(
         }
         if (txt == ")" || txt == undefined) break;
         if (txt != ",") {
+            if (DEBUG) console.error("not camma end line");
             console.error("create table syntax error [%s]", cmd);
             return false;
         }
@@ -290,8 +317,13 @@ async function executeCreateTable(
     try {
         if (DEBUG) console.log(JSON.stringify(req, null, 2));
         const response = await db.createTable(req);
+
         if (response != undefined) {
-            console.log(JSON.stringify(response, null, 2));
+            const meta = response["$metadata"];
+            console.log("http status code: ", meta.httpStatusCode);
+            if (response.TableDescription != undefined) {
+                console.log(JSON.stringify(response.TableDescription, null, 2));
+            }
         }
         addHistory(originSQL);
     } catch (e) {
@@ -313,34 +345,40 @@ async function executeDeleteTable(
     lex.next();
     let txt = lex.next();
     if (txt.toUpperCase() != "TABLE") {
-        console.log("delete table syntax error [%s]", cmd);
+        console.log("drop table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt.toUpperCase() == "IF") {
         txt = lex.next();
         if (txt.toUpperCase() != "EXISTS") {
-            console.log("delete table syntax error [%s]", cmd);
+            console.log("drop table syntax error [%s]", cmd);
             return false;
         }
         ignoreNotFundErr = true;
+        txt = lex.next();
     }
 
-    let tableName = lex.next();
+    let tableName = txt;
     if (tableName == undefined) {
-        console.log("delete table syntax error [%s]", cmd);
+        console.log("drop table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt != ";") {
-        console.log("delete table syntax error [%s]", cmd);
+        console.log("drop table syntax error [%s]", cmd);
         return false;
     }
 
     try {
         const response = await db.deleteTable(tableName, ignoreNotFundErr);
+
         if (response != undefined) {
-            console.log(JSON.stringify(response, null, 2));
+            const meta = response["$metadata"];
+            console.log("http status code: ", meta.httpStatusCode);
+            if (response.TableDescription != undefined) {
+                console.log(JSON.stringify(response.TableDescription, null, 2));
+            }
         }
         addHistory(originSQL);
     } catch (e) {
@@ -411,7 +449,7 @@ export async function Prompt(option: OptionType): Promise<number> {
     let scriptMode = false;
     let fileRreader = undefined;
 
-    DEBUG = option.debug;
+    setDebug(option.debug);
     variables = {};
     historyList = [];
 
