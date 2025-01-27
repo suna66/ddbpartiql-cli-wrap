@@ -169,8 +169,6 @@ async function executeCreateTable(
     let secondaryIndexes: Array<SecondaryIndex> = undefined;
     while (1) {
         txt = lex.next();
-        if (txt == ")" || txt == undefined) break;
-
         if (txt.toUpperCase() == "INDEX") {
             if (secondaryIndexes == undefined) secondaryIndexes = [];
             txt = lex.next();
@@ -187,7 +185,7 @@ async function executeCreateTable(
             }
 
             txt = lex.next();
-            if (txt != "{") {
+            if (txt != "(") {
                 console.error("create table syntax error [%s]", cmd);
                 return false;
             }
@@ -227,8 +225,12 @@ async function executeCreateTable(
                     keyType: keyType,
                 });
                 txt = lex.next();
-                if (txt == "}" || txt == undefined) {
+                if (txt == ")" || txt == undefined) {
                     break;
+                }
+                if (txt != ",") {
+                    console.error("create table syntax error [%s]", cmd);
+                    return false;
                 }
             }
             secondaryIndexes.push({
@@ -266,12 +268,18 @@ async function executeCreateTable(
             txt = txt.toUpperCase();
             if (txt == KeyType.HASH || txt == KeyType.RANGE) {
                 keyType = txt;
+                txt = lex.next();
             }
             attributeDefinitions.push({
                 attributeName: attrName,
                 attributeType: attrType,
                 keyType: keyType,
             });
+        }
+        if (txt == ")" || txt == undefined) break;
+        if (txt != ",") {
+            console.error("create table syntax error [%s]", cmd);
+            return false;
         }
     }
     const req: CreateTableRequest = {
