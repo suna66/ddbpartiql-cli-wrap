@@ -316,6 +316,7 @@ async function executeCreateTable(
     };
     try {
         if (DEBUG) console.log(JSON.stringify(req, null, 2));
+        console.log(cmd);
         const response = await db.createTable(req);
 
         if (response != undefined) {
@@ -371,6 +372,7 @@ async function executeDeleteTable(
     }
 
     try {
+        console.log(cmd);
         const response = await db.deleteTable(tableName, ignoreNotFundErr);
 
         if (response != undefined) {
