@@ -25,8 +25,25 @@ export class Lex {
                     var index: number = 0;
                     while (1) {
                         c = this.sentence[index++];
-                        if (c == '"' || c == undefined || c == null) {
-                            break;
+                        if (c == "\\") {
+                            c = this.sentence[index++];
+                            switch (c) {
+                                case "n":
+                                    c = "\n";
+                                    break;
+                                case "r":
+                                    c = "\r";
+                                    break;
+                                case "t":
+                                    c = "\t";
+                                    break;
+                                default:
+                                    break;
+                            }
+                        } else {
+                            if (c == '"' || c == undefined || c == null) {
+                                break;
+                            }
                         }
                         str += c;
                     }

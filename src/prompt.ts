@@ -445,16 +445,7 @@ async function executeCommand(
     return ret;
 }
 
-export async function Prompt(option: OptionType): Promise<number> {
-    let command = "";
-    let input = "";
-    let scriptMode = false;
-    let fileRreader = undefined;
-
-    setDebug(option.debug);
-    variables = {};
-    historyList = [];
-
+function initDynamoDBAccessor(option: OptionType): DynamoDBAccessor {
     let credentials = undefined;
     if (option.accessKey != undefined && option.secretAccessKey != undefined) {
         credentials = {
@@ -470,15 +461,16 @@ export async function Prompt(option: OptionType): Promise<number> {
         region: option.region,
     };
 
-    const db: DynamoDBAccessor = new DynamoDBAccessor(config);
+    return new DynamoDBAccessor(config);
+}
 
-    if (option.script != undefined) {
+async function mainLoop(db: DynamoDBAccessor, fileReader: FileReader): Promise<number> {
+    let command = "";
+    let input = "";
+    let scriptMode = false;
+
+    if (fileReader != undefined) {
         scriptMode = true;
-        fileRreader = new FileReader();
-        if (!fileRreader.load(option.script)) {
-            console.error("no input script file");
-            return -1;
-        }
     }
 
     while (1) {
@@ -488,7 +480,7 @@ export async function Prompt(option: OptionType): Promise<number> {
                 continue;
             }
         } else {
-            input = fileRreader.read();
+            input = fileReader.read();
             if (input == undefined) {
                 break;
             }
@@ -547,4 +539,26 @@ export async function Prompt(option: OptionType): Promise<number> {
         }
     }
     return 0;
+}
+
+export async function Prompt(option: OptionType): Promise<number> {
+    let command = "";
+    let input = "";
+    let fileReader = undefined;
+
+    setDebug(option.debug);
+    variables = {};
+    historyList = [];
+
+    const db = initDynamoDBAccessor(option);
+
+    if (option.script != undefined) {
+        fileReader = new FileReader();
+        if (!fileReader.load(option.script)) {
+            console.error("no input script file");
+            return -1;
+        }
+    }
+
+    return await mainLoop(db, fileReader);
 }

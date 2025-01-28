@@ -20,11 +20,11 @@ $ npm install -g .
 ddbpartiql [OPTIONS] [scritp file]
 
 OPTIONS:
-    -h                          printing how to use 
-    -p <profile>                aws profile name
-    -r <region>                 aws region name
-    -v <true/false>             verbose mode
-    --endpoint <url>            endpoint url
+    -h/--help                   printing how to use
+    -p/--profile <profile>      aws profile name
+    -r/--region  <region>       aws region name
+    -v/--verbose                verbose mode
+    -E/--endpoint <url>         endpoint url
     --access_key <value>        aws credential access key id
     --secret_access_key <value> aws credential secret access key
 ```
