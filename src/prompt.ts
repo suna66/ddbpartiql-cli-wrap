@@ -464,7 +464,10 @@ function initDynamoDBAccessor(option: OptionType): DynamoDBAccessor {
     return new DynamoDBAccessor(config);
 }
 
-async function mainLoop(db: DynamoDBAccessor, fileReader: FileReader): Promise<number> {
+async function mainLoop(
+    db: DynamoDBAccessor,
+    fileReader: FileReader
+): Promise<number> {
     let command = "";
     let input = "";
     let scriptMode = false;
@@ -542,8 +545,6 @@ async function mainLoop(db: DynamoDBAccessor, fileReader: FileReader): Promise<n
 }
 
 export async function Prompt(option: OptionType): Promise<number> {
-    let command = "";
-    let input = "";
     let fileReader = undefined;
 
     setDebug(option.debug);

@@ -1,6 +1,3 @@
-import { keyInput } from "./input";
-import DynamoDBAccessor, { DynamoDBConfig } from "./database";
-import FileReader from "./file_reader";
 import { Prompt } from "./prompt";
 import { OptionType } from "./types";
 import { parseArgs } from "node:util";
@@ -21,32 +18,32 @@ OPTIONS:
 `;
 
 const options = {
-    "help": {
+    help: {
         type: "boolean",
         short: "h",
     },
-    "profile": {
+    profile: {
         type: "string",
         short: "p",
     },
-    "region": {
+    region: {
         type: "string",
         short: "r",
     },
-    "verbose": {
+    verbose: {
         type: "boolean",
         short: "v",
     },
-    "endpoint": {
+    endpoint: {
         type: "string",
         short: "E",
     },
-    "access_key": {
+    access_key: {
         type: "string",
     },
-    "secret_access_key": {
+    secret_access_key: {
         type: "string",
-    }
+    },
 } as const;
 
 function commandOptions(): OptionType | undefined {
@@ -54,7 +51,7 @@ function commandOptions(): OptionType | undefined {
     const { values, positionals } = parseArgs({
         args: args,
         options: options,
-        allowPositionals: true
+        allowPositionals: true,
     });
 
     let profile = undefined;
