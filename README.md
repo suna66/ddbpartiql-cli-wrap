@@ -104,4 +104,4 @@ ddbpartiql> select * from "${variable}"
 #### build-in variables
 
 `UUID` : Generating UUID.
-`NOW`  : UNIX epoch time(Second).
+`NOW`  : Current UNIX epoch time(Second).

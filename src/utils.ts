@@ -63,7 +63,7 @@ export function convertVariables(
                 if (key == "UUID") {
                     c = getUUID();
                 } else if (key == "NOW") {
-                    c = getUUID().toString();
+                    c = epochTime().toString();
                 } else {
                     c = variables[key];
                     if (c == undefined) {
