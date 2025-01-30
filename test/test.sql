@@ -2,6 +2,7 @@
 - comment
 
 # Create Table
+drop table if exists "test-create-table";
 create table "test-create-table" (
     id N HASH,
     name S RANGE,
@@ -18,6 +19,9 @@ create table "test-create-table" (
 
 insert into "ddb-test-table" value 
   {'id': 10, 'name': 'name1','age': 20};
+
+insert into "ddb-test-table" value 
+  {'id': 11, 'name': '${UUID}','age': 20, 'update_at': ${NOW}};
 
 @age = 30;
 @table_name = ddb-test-table;

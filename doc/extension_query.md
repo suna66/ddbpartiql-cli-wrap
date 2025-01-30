@@ -31,3 +31,11 @@ create table "{table name}" (
 ```
 drop table [if exists] "{table name}";
 ```
+
+## Sleep query
+
+### query format
+
+```
+sleep(ms);
+```

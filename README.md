@@ -100,3 +100,8 @@ ddbpartiql> exit
 ddbpartiql> @variable = ddb-test-table;
 ddbpartiql> select * from "${variable}"
 ```
+
+#### build-in variables
+
+`UUID` : Generating UUID.
+`NOW`  : Current UNIX epoch time(Second).

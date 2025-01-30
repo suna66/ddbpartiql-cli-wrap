@@ -3,6 +3,14 @@ export function setDebug(flag: boolean) {
     DEBUG = flag;
 }
 
+export function getUUID(): string {
+    return crypto.randomUUID();
+}
+
+export function epochTime(): number {
+    return Math.trunc(Date.now() / 100);
+}
+
 export function trimStr(src: string): string {
     if (src == undefined) {
         return "";
@@ -52,9 +60,15 @@ export function convertVariables(
                 key += c;
             }
             if (key.length > 0) {
-                c = variables[key];
-                if (c == undefined) {
-                    c = "";
+                if (key == "UUID") {
+                    c = getUUID();
+                } else if (key == "NOW") {
+                    c = epochTime().toString();
+                } else {
+                    c = variables[key];
+                    if (c == undefined) {
+                        c = "";
+                    }
                 }
             }
         }
