@@ -34,7 +34,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@types/node": "^22.10.10",
     "@types/minimist": "^1.2.5",
-    "rollup": "^4.32.0",
+    "rollup": "^4.34.0",
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-loader": "^9.5.2",
     "tslib": "^2.8.1",
