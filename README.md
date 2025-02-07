@@ -21,12 +21,13 @@ ddbpartiql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h/--help                   printing how to use
-    -p/--profile <profile>      aws profile name
-    -r/--region  <region>       aws region name
+    -p/--profile {profile}      aws profile name
+    -r/--region  {region}       aws region name
     -v/--verbose                verbose mode
-    -E/--endpoint <url>         endpoint url
-    --access_key <value>        aws credential access key id
-    --secret_access_key <value> aws credential secret access key
+    -E/--endpoint {url}         endpoint url
+    -F/--format {json/table}    query response format(default: json)
+    --access_key {value}        aws credential access key id
+    --secret_access_key {value} aws credential secret access key
 ```
 
 ## Example
