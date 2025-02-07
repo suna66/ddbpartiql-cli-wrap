@@ -85,7 +85,8 @@ function addHistory(cmd: string) {
 
 async function executePartiQL(
     db: DynamoDBAccessor,
-    sql: string
+    sql: string,
+    option: OptionType
 ): Promise<boolean> {
     try {
         let originSQL = sql;
@@ -98,7 +99,11 @@ async function executePartiQL(
             const meta = response["$metadata"];
             console.log("http status code: ", meta.httpStatusCode);
             if (response.Items != undefined) {
-                console.log(JSON.stringify(response.Items, null, 2));
+                if (option.format == "table") {
+                    console.table(response.Items);
+                } else {
+                    console.log(JSON.stringify(response.Items, null, 2));
+                }
             }
         }
         addHistory(originSQL);
@@ -425,7 +430,8 @@ async function executeVariable(cmd: string): Promise<boolean> {
 
 async function executeCommand(
     db: DynamoDBAccessor,
-    cmd: string
+    cmd: string,
+    option: OptionType
 ): Promise<boolean> {
     let ret = false;
     if (DEBUG) {
@@ -441,7 +447,7 @@ async function executeCommand(
     } else if (cmd.startsWith("drop") || cmd.startsWith("DROP")) {
         ret = await executeDeleteTable(db, cmd);
     } else {
-        ret = await executePartiQL(db, cmd);
+        ret = await executePartiQL(db, cmd, option);
     }
     return ret;
 }
@@ -467,11 +473,16 @@ function initDynamoDBAccessor(option: OptionType): DynamoDBAccessor {
 
 async function mainLoop(
     db: DynamoDBAccessor,
-    fileReader: FileReader
+    fileReader: FileReader,
+    option: OptionType
 ): Promise<number> {
     let command = "";
     let input = "";
     let scriptMode = false;
+
+    if (DEBUG) {
+        console.log(option);
+    }
 
     if (fileReader != undefined) {
         scriptMode = true;
@@ -534,7 +545,7 @@ async function mainLoop(
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            const ok = await executeCommand(db, command);
+            const ok = await executeCommand(db, command, option);
             if (!ok && scriptMode) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
@@ -562,5 +573,5 @@ export async function Prompt(option: OptionType): Promise<number> {
         }
     }
 
-    return await mainLoop(db, fileReader);
+    return await mainLoop(db, fileReader, option);
 }

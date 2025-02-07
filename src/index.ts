@@ -13,6 +13,7 @@ OPTIONS:
     -r/--region  <region>       aws region name
     -v/--verbose                verbose mode
     -E/--endpoint <url>         endpoint url
+    -F/--format {json/table}    query response format(default: json)
     --access_key <value>        aws credential access key id
     --secret_access_key <value> aws credential secret access key
 `;
@@ -25,24 +26,35 @@ const options = {
     profile: {
         type: "string",
         short: "p",
+        multiple: false,
     },
     region: {
         type: "string",
         short: "r",
+        multiple: false,
     },
     verbose: {
         type: "boolean",
         short: "v",
+        multiple: false,
     },
     endpoint: {
         type: "string",
         short: "E",
+        multiple: false,
+    },
+    format: {
+        type: "string",
+        short: "F",
+        multiple: false,
     },
     access_key: {
         type: "string",
+        multiple: false,
     },
     secret_access_key: {
         type: "string",
+        multiple: false,
     },
 } as const;
 
@@ -57,6 +69,7 @@ function commandOptions(): OptionType | undefined {
     let profile = undefined;
     let region = undefined;
     let endpoint = undefined;
+    let format = "json";
     let accessKey = undefined;
     let secretAccessKey = undefined;
     let script = undefined;
@@ -77,6 +90,9 @@ function commandOptions(): OptionType | undefined {
     if (values["endpoint"] != undefined) {
         endpoint = values["endpoint"];
     }
+    if (values["format"] != undefined) {
+        format = values["format"];
+    }
     if (values["access_key"] != undefined) {
         accessKey = values["access_key"];
     }
@@ -93,6 +109,7 @@ function commandOptions(): OptionType | undefined {
         profile,
         region,
         endpoint,
+        format,
         accessKey,
         secretAccessKey,
         script,

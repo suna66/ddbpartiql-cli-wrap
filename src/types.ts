@@ -2,6 +2,7 @@ export type OptionType = {
     profile: undefined | string;
     region: undefined | string;
     endpoint: undefined | string;
+    format: undefined | string;
     accessKey: undefined | string;
     secretAccessKey: undefined | string;
     script: undefined | string;

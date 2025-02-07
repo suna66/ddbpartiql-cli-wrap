@@ -22,10 +22,20 @@ if [ $? -ne 0 ]; then
     ERROR_FLG=1
 fi
 
-../bin/cli.js -r ${REGION} --endpoint ${ENDPOINT} ${TEST_SQL}
-if [ $? -ne 0 ]; then
-    echo "[ERROR] ddbpartiql cli error"
-    ERROR_FLG=1
+if [ $ERROR_FLG -ne 1 ]; then
+    ../bin/cli.js -r ${REGION} --endpoint ${ENDPOINT} ${TEST_SQL} ]]
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] ddbpartiql cli error"
+        ERROR_FLG=1
+    fi
+fi
+
+if [ $ERROR_FLG -ne 1 ]; then
+    ../bin/cli.js -r ${REGION} -v --format table --endpoint ${ENDPOINT} ${TEST_SQL}
+    if [ $? -ne 0 ]; then
+        echo "[ERROR] ddbpartiql cli error"
+        ERROR_FLG=1
+    fi
 fi
 
 aws dynamodb delete-table --table-name ${TEST_TABLE_NAME} --endpoint-url=${ENDPOINT} --no-cli-pager
