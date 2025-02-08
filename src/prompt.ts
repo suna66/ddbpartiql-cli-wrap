@@ -9,7 +9,13 @@ import DynamoDBAccessor, {
 } from "./database";
 import FileReader from "./file_reader";
 import { Lex } from "./lex";
-import { OptionType, InputType, DELIMITTER, HISTORY_LIST_MAX } from "./types";
+import {
+    OptionType,
+    InputType,
+    DELIMITTER,
+    HISTORY_LIST_MAX,
+    AnalysisType,
+} from "./types";
 import {
     trimStr,
     semicolonToBlank,
@@ -18,6 +24,7 @@ import {
     setDebug,
 } from "./utils";
 import { KeyType } from "@aws-sdk/client-dynamodb";
+import { setTimeout } from "node:timers/promises";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
@@ -29,6 +36,30 @@ const promptCmdHelp = `
   clear          clear console
   exit           exit ddbpartiql cli
 `;
+
+type BuildInFuncType = {
+    name: string;
+    func: (cmd: string) => Promise<AnalysisType>;
+};
+
+const buildInFunctions: Array<BuildInFuncType> = [
+    {
+        name: "sleep",
+        func: sleepFunction,
+    },
+    {
+        name: "clear",
+        func: clearFunction,
+    },
+    {
+        name: "exit",
+        func: exitFunction,
+    },
+    {
+        name: "!",
+        func: optionFunction,
+    },
+];
 
 function checkPromptCmd(cmd: string): InputType {
     switch (cmd[1]) {
@@ -58,17 +89,8 @@ function checkInput(input: string): InputType {
     if (cmd[0] == "#" || cmd[0] == "-") {
         return InputType.TYPE_COMMENT;
     }
-    if (cmd[0] == "!") {
-        return checkPromptCmd(cmd);
-    }
     if (cmd[cmd.length - 1] == ";") {
         return InputType.TYPE_RUN;
-    }
-    if (cmd == "exit") {
-        return InputType.TYPE_END;
-    }
-    if (cmd == "clear") {
-        return InputType.TYPE_CLEAR;
     }
 
     return InputType.TYPE_CONTINUE;
@@ -471,6 +493,79 @@ function initDynamoDBAccessor(option: OptionType): DynamoDBAccessor {
     return new DynamoDBAccessor(config);
 }
 
+async function sleepFunction(cmd: string): Promise<AnalysisType> {
+    const lex = new Lex(cmd);
+    const name = lex.next();
+    const value = lex.next();
+    const token = lex.next();
+
+    if (DEBUG) console.log("Calling sleep function");
+
+    if (name != "sleep") {
+        console.error("unkown function name [%s]", name);
+        return AnalysisType.TYPE_ERROR;
+    }
+    let intValue = parseInt(value);
+    if (isNaN(intValue)) {
+        console.error("not integer value in sleep function (%s)", value);
+        return AnalysisType.TYPE_ERROR;
+    }
+    if (token != undefined) {
+        console.warn("unknown option in sleep function [%s]", token);
+    }
+    await setTimeout(intValue);
+
+    return AnalysisType.TYPE_SKIP;
+}
+
+async function clearFunction(cmd: string): Promise<AnalysisType> {
+    return AnalysisType.TYPE_CLEAR;
+}
+
+async function exitFunction(cmd: string): Promise<AnalysisType> {
+    return AnalysisType.TYPE_END;
+}
+
+async function optionFunction(cmd: string): Promise<AnalysisType> {
+    const type = checkPromptCmd(cmd);
+    switch (type) {
+        case InputType.TYPE_SHOW_HISTORY:
+            if (DEBUG) console.log("----SHOW HISTORY----");
+            let index = 0;
+            for (let cmd of historyList) {
+                console.log("[%d]: ", index++, cmd);
+            }
+            break;
+        case InputType.TYPE_SHOW_CURRENT_CMD:
+            if (DEBUG) console.log("----SHOW CURRENT COMMAND----");
+            return AnalysisType.TYPE_VIEW;
+            break;
+        case InputType.TYPE_SHOW_VARIABLES:
+            if (DEBUG) console.log("----SHOW VARIABLES----");
+            for (let key in variables) {
+                console.log("[%s] = %s", key, variables[key]);
+            }
+            break;
+        case InputType.TYPE_SHOW_HELP:
+            console.log(promptCmdHelp);
+            break;
+        default:
+            break;
+    }
+    return AnalysisType.TYPE_SKIP;
+}
+
+async function analysisCommand(cmd: string): Promise<AnalysisType> {
+    cmd = cmd.trim();
+
+    for (let func of buildInFunctions) {
+        if (cmd.startsWith(func.name)) {
+            return await func.func(cmd);
+        }
+    }
+    return AnalysisType.TYPE_NORMAL;
+}
+
 async function mainLoop(
     db: DynamoDBAccessor,
     fileReader: FileReader,
@@ -506,40 +601,34 @@ async function mainLoop(
             continue;
         }
         const type = checkInput(input);
+        if (type == InputType.TYPE_COMMENT) continue;
 
-        switch (type) {
-            case InputType.TYPE_COMMENT:
-                continue;
-            case InputType.TYPE_END:
-                if (DEBUG) console.log("----END----");
-                return 0;
-            case InputType.TYPE_CLEAR:
-                if (DEBUG) console.log("----CLEAR----");
-                console.clear();
-                command = "";
-                continue;
-            case InputType.TYPE_SHOW_HISTORY:
-                if (DEBUG) console.log("----SHOW HISTORY----");
-                let index = 0;
-                for (let cmd of historyList) {
-                    console.log("[%d]: ", index++, cmd);
-                }
-                continue;
-            case InputType.TYPE_SHOW_CURRENT_CMD:
-                if (DEBUG) console.log("----SHOW CURRENT COMMAND----");
-                console.log(command);
-                continue;
-            case InputType.TYPE_SHOW_VARIABLES:
-                if (DEBUG) console.log("----SHOW VARIABLES----");
-                for (let key in variables) {
-                    console.log("[%s] = %s", key, variables[key]);
-                }
-                continue;
-            case InputType.TYPE_SHOW_HELP:
-                console.log(promptCmdHelp);
-                continue;
-            default:
-                break;
+        let analysisRes = await analysisCommand(input);
+        if (analysisRes != 0) {
+            switch (analysisRes) {
+                case AnalysisType.TYPE_VIEW:
+                    console.log(command);
+                    continue;
+                case AnalysisType.TYPE_CLEAR:
+                    if (DEBUG) console.log("----CLEAR----");
+                    console.clear();
+                    command = "";
+                    continue;
+                case AnalysisType.TYPE_END:
+                    if (DEBUG) console.log("----END----");
+                    return 0;
+                case AnalysisType.TYPE_SKIP:
+                    continue;
+                case AnalysisType.TYPE_ERROR:
+                    if (scriptMode) {
+                        if (DEBUG) console.error("error for script mode");
+                        return -1;
+                    }
+                    command = "";
+                    continue;
+                default:
+                    break;
+            }
         }
 
         command += input;
