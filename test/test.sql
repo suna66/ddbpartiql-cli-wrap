@@ -50,6 +50,8 @@ desc "test-create-table";
 # drop table
 drop table if exists "test-create-table";
 
+sleep 3000
+
 !?
 
 !h
