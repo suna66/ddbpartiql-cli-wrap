@@ -106,3 +106,9 @@ ddbpartiql> select * from "${variable}"
 
 - `UUID` : Generating UUID.
 - `NOW`  : Current UNIX epoch time(Second).
+
+#### build-in functions
+
+- `sleep {integer}`   : sleep thread(ms)
+- `clear`             : clear console
+- `exit`              : exit prompt
