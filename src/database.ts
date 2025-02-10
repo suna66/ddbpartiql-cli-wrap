@@ -8,8 +8,8 @@ import {
     DeleteTableCommand,
     DeleteTableCommandOutput,
     ResourceNotFoundException,
-		ListTablesCommand,
-		ListTablesCommandOutput,
+    ListTablesCommand,
+    ListTablesCommandOutput,
 } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
@@ -212,13 +212,13 @@ export default class DynamoDBAccessor {
         return response;
     }
 
-		async showTables(
-			lastEvaluatedTableName: string
-		): Promise<ListTablesCommandOutput> {
-			const command = new ListTablesCommand({
-				ExclusiveStartTableName: lastEvaluatedTableName,
-			});
-			const response = await this.docClient.send(command);
-			return response;
-		}
+    async showTables(
+      lastEvaluatedTableName: string
+    ): Promise<ListTablesCommandOutput> {
+      const command = new ListTablesCommand({
+        ExclusiveStartTableName: lastEvaluatedTableName,
+      });
+      const response = await this.docClient.send(command);
+      return response;
+    }
 }
