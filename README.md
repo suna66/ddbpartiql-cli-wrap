@@ -65,6 +65,12 @@ ddbpartiql> update "ddb-test-table"
 ddbpartiql> delete from "ddb-test-table" where id=10 and name='name1';
 ```
 
+#### Show Tables(extension query)
+
+```bash
+ddbpartiql> show tables;
+```
+
 #### Describe Table(extension query)
 
 ```bash
