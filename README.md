@@ -118,3 +118,10 @@ ddbpartiql> select * from "${variable}"
 - `sleep {integer}`   : sleep thread(ms)
 - `clear`             : clear console
 - `exit`              : exit prompt
+
+
+## Copyright and Disclaimer
+
+This software is free software. Please feel free to use it. The copyright is held by the author, "suna66".
+
+Neither I, anyone related to me, nor any of the organizations or groups I belong to, will be held responsible for any damages, losses, or other inconveniences that may arise from the use of this software. Use at your own risk.
