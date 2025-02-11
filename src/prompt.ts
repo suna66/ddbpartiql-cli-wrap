@@ -450,6 +450,56 @@ async function executeVariable(cmd: string): Promise<boolean> {
     return true;
 }
 
+async function executeShowTables(
+  db: DynamoDBAccessor,
+  cmd: string
+): Promise<boolean> {
+  let originCmd = cmd;
+  cmd = convertVariables(cmd, variables);
+  const lex = new Lex(cmd);
+  let txt = lex.next();
+  if (txt.toUpperCase() != "SHOW") {
+      console.error("show tables query error");
+      return false;
+  }
+  txt = lex.next();
+  if (txt.toUpperCase() != "TABLES") {
+    console.error("show tables query error");
+    return false;
+  }
+  txt = lex.next();
+  if (txt != ";") {
+      console.error("show tables syntax error [%s]", cmd);
+      return false;
+  }
+  try {
+      console.log(cmd);
+      let lastEvaluatedTableName = undefined;
+      while(true){
+        let response = await db.showTables(lastEvaluatedTableName);
+        if (response == undefined) {
+          throw new Error("show tables returned an unexpected response");
+        }
+        const meta = response["$metadata"];
+        console.log("http status code: ", meta.httpStatusCode);
+        if (response.TableNames != undefined) {
+            console.log(JSON.stringify(response.TableNames, null, 2));
+        }
+        if(response.LastEvaluatedTableName != undefined){
+          lastEvaluatedTableName = response.LastEvaluatedTableName;
+        } else {
+          break;
+        }
+      }
+      addHistory(originCmd);
+  } catch (e) {
+      console.error(e.toString());
+      return false;
+  }
+
+  return true;
+}
+
 async function executeCommand(
     db: DynamoDBAccessor,
     cmd: string,
@@ -468,6 +518,8 @@ async function executeCommand(
         ret = await executeCreateTable(db, cmd);
     } else if (cmd.startsWith("drop") || cmd.startsWith("DROP")) {
         ret = await executeDeleteTable(db, cmd);
+    } else if (cmd.startsWith("show") || cmd.startsWith("SHOW")) {
+        ret = await executeShowTables(db, cmd);
     } else {
         ret = await executePartiQL(db, cmd, option);
     }
