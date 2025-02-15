@@ -44,6 +44,11 @@ where id=10 and name='name1';
 
 select * from "ddb-test-table";
 
+show tables;
+connect -r us-east-1
+show tables;
+connect -r ap-northeast-1
+
 # show created table
 desc "test-create-table";
 
