@@ -127,7 +127,7 @@ ddbpartiql> select * from "${variable}"
     --access_key {value}        aws credential access key id
     --secret_access_key {value} aws credential secret access key
     ```
-
+- `echo` [string]...  : output string
 
 ## Copyright and Disclaimer
 
