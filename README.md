@@ -118,6 +118,15 @@ ddbpartiql> select * from "${variable}"
 - `sleep {integer}`   : sleep thread(ms)
 - `clear`             : clear console
 - `exit`              : exit prompt
+- `connect`           : re-connect dynamodb
+    ```
+    [OPTIOIN]
+    -p/--profile {profile}      aws profile name
+    -r/--region  {region}       aws region name
+    -E/--endpoint {url}         endpoint url
+    --access_key {value}        aws credential access key id
+    --secret_access_key {value} aws credential secret access key
+    ```
 
 
 ## Copyright and Disclaimer
