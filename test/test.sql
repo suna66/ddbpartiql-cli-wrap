@@ -62,3 +62,5 @@ sleep 3000
 !h
 
 !v
+
+echo "echo test ${table_name}" "hello" 10
