@@ -1,63 +1,115 @@
-import { keyInput } from "./input";
-import DynamoDBAccessor, { DynamoDBConfig } from "./database";
-import FileReader from "./file_reader";
-import minimist from "minimist";
 import { Prompt } from "./prompt";
 import { OptionType } from "./types";
+import { parseArgs } from "node:util";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const help = `
 version: ${VERSION}
 ddbpartiql [OPTIONS] [scritp file]
 
 OPTIONS:
-    -h                          printing how to use
-    -p <profile>                aws profile name
-    -r <region>                 aws region name
-    -v <true/false>             verbose mode
-    --endpoint <url>            endpoint url
+    -h/--help                   printing how to use
+    -p/--profile <profile>      aws profile name
+    -r/--region  <region>       aws region name
+    -v/--verbose                verbose mode
+    -E/--endpoint <url>         endpoint url
+    -F/--format {json/table}    query response format(default: json)
     --access_key <value>        aws credential access key id
     --secret_access_key <value> aws credential secret access key
 `;
 
-function commandOptions(argv: minimist.ParsedArgs): OptionType | undefined {
+const options = {
+    help: {
+        type: "boolean",
+        short: "h",
+    },
+    profile: {
+        type: "string",
+        short: "p",
+        multiple: false,
+    },
+    region: {
+        type: "string",
+        short: "r",
+        multiple: false,
+    },
+    verbose: {
+        type: "boolean",
+        short: "v",
+        multiple: false,
+    },
+    endpoint: {
+        type: "string",
+        short: "E",
+        multiple: false,
+    },
+    format: {
+        type: "string",
+        short: "F",
+        multiple: false,
+    },
+    access_key: {
+        type: "string",
+        multiple: false,
+    },
+    secret_access_key: {
+        type: "string",
+        multiple: false,
+    },
+} as const;
+
+function commandOptions(): OptionType | undefined {
+    const args: Array<string> = process.argv.slice(2);
+    const { values, positionals } = parseArgs({
+        args: args,
+        options: options,
+        allowPositionals: true,
+    });
+
     let profile = undefined;
     let region = undefined;
     let endpoint = undefined;
+    let format = "json";
     let accessKey = undefined;
     let secretAccessKey = undefined;
     let script = undefined;
     let debug = false;
-    if (argv["h"] != undefined) {
+    if (values["help"] != undefined) {
         console.log(help);
         return undefined;
     }
-    if (argv["p"] != undefined) {
-        profile = argv["p"];
+    if (values["profile"] != undefined) {
+        profile = values["profile"];
     }
-    if (argv["r"] != undefined) {
-        region = argv["r"];
+    if (values["region"] != undefined) {
+        region = values["region"];
     }
-    if (argv["v"] != undefined) {
-        debug = argv["v"] == "true" ? true : false;
+    if (values["verbose"] != undefined) {
+        debug = values["verbose"];
     }
-    if (argv["endpoint"] != undefined) {
-        endpoint = argv["endpoint"];
+    if (values["endpoint"] != undefined) {
+        endpoint = values["endpoint"];
     }
-    if (argv["access_key"] != undefined) {
-        accessKey = argv["access_key"];
+    if (values["format"] != undefined) {
+        format = values["format"];
     }
-    if (argv["secret_access_key"] != undefined) {
-        secretAccessKey = argv["secret_access_key"];
+    if (values["access_key"] != undefined) {
+        accessKey = values["access_key"];
     }
-    const cmdlines = argv._;
-    if (cmdlines.length > 0) {
-        script = cmdlines[0];
+    if (values["secret_access_key"] != undefined) {
+        secretAccessKey = values["secret_access_key"];
+    }
+
+    if (positionals != undefined) {
+        if (positionals.length > 0) {
+            script = positionals[0];
+        }
     }
     return {
         profile,
         region,
         endpoint,
+        format,
         accessKey,
         secretAccessKey,
         script,
@@ -66,8 +118,7 @@ function commandOptions(argv: minimist.ParsedArgs): OptionType | undefined {
 }
 
 (function () {
-    const argv = minimist(process.argv.slice(2));
-    const op = commandOptions(argv);
+    const op = commandOptions();
     if (op == undefined) {
         process.exit(0);
     }
