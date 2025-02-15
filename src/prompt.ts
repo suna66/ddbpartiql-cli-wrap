@@ -25,6 +25,7 @@ import {
 } from "./utils";
 import { KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
+import { parseArgs } from "node:util";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
@@ -39,7 +40,7 @@ const promptCmdHelp = `
 
 type BuildInFuncType = {
     name: string;
-    func: (cmd: string) => Promise<AnalysisType>;
+    func: (cmd: string, option: OptionType) => Promise<AnalysisType>;
 };
 
 const buildInFunctions: Array<BuildInFuncType> = [
@@ -58,6 +59,10 @@ const buildInFunctions: Array<BuildInFuncType> = [
     {
         name: "!",
         func: optionFunction,
+    },
+    {
+        name: "connect",
+        func: connectFunction,
     },
 ];
 
@@ -451,53 +456,53 @@ async function executeVariable(cmd: string): Promise<boolean> {
 }
 
 async function executeShowTables(
-  db: DynamoDBAccessor,
-  cmd: string
+    db: DynamoDBAccessor,
+    cmd: string
 ): Promise<boolean> {
-  let originCmd = cmd;
-  cmd = convertVariables(cmd, variables);
-  const lex = new Lex(cmd);
-  let txt = lex.next();
-  if (txt.toUpperCase() != "SHOW") {
-      console.error("show tables query error");
-      return false;
-  }
-  txt = lex.next();
-  if (txt.toUpperCase() != "TABLES") {
-    console.error("show tables query error");
-    return false;
-  }
-  txt = lex.next();
-  if (txt != ";") {
-      console.error("show tables syntax error [%s]", cmd);
-      return false;
-  }
-  try {
-      console.log(cmd);
-      let lastEvaluatedTableName = undefined;
-      while(true){
-        let response = await db.showTables(lastEvaluatedTableName);
-        if (response == undefined) {
-          throw new Error("show tables returned an unexpected response");
+    let originCmd = cmd;
+    cmd = convertVariables(cmd, variables);
+    const lex = new Lex(cmd);
+    let txt = lex.next();
+    if (txt.toUpperCase() != "SHOW") {
+        console.error("show tables query error");
+        return false;
+    }
+    txt = lex.next();
+    if (txt.toUpperCase() != "TABLES") {
+        console.error("show tables query error");
+        return false;
+    }
+    txt = lex.next();
+    if (txt != ";") {
+        console.error("show tables syntax error [%s]", cmd);
+        return false;
+    }
+    try {
+        console.log(cmd);
+        let lastEvaluatedTableName = undefined;
+        while (true) {
+            let response = await db.showTables(lastEvaluatedTableName);
+            if (response == undefined) {
+                throw new Error("show tables returned an unexpected response");
+            }
+            const meta = response["$metadata"];
+            console.log("http status code: ", meta.httpStatusCode);
+            if (response.TableNames != undefined) {
+                console.log(JSON.stringify(response.TableNames, null, 2));
+            }
+            if (response.LastEvaluatedTableName != undefined) {
+                lastEvaluatedTableName = response.LastEvaluatedTableName;
+            } else {
+                break;
+            }
         }
-        const meta = response["$metadata"];
-        console.log("http status code: ", meta.httpStatusCode);
-        if (response.TableNames != undefined) {
-            console.log(JSON.stringify(response.TableNames, null, 2));
-        }
-        if(response.LastEvaluatedTableName != undefined){
-          lastEvaluatedTableName = response.LastEvaluatedTableName;
-        } else {
-          break;
-        }
-      }
-      addHistory(originCmd);
-  } catch (e) {
-      console.error(e.toString());
-      return false;
-  }
+        addHistory(originCmd);
+    } catch (e) {
+        console.error(e.toString());
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 async function executeCommand(
@@ -545,7 +550,10 @@ function initDynamoDBAccessor(option: OptionType): DynamoDBAccessor {
     return new DynamoDBAccessor(config);
 }
 
-async function sleepFunction(cmd: string): Promise<AnalysisType> {
+async function sleepFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
     const lex = new Lex(cmd);
     const name = lex.next();
     const value = lex.next();
@@ -570,15 +578,24 @@ async function sleepFunction(cmd: string): Promise<AnalysisType> {
     return AnalysisType.TYPE_SKIP;
 }
 
-async function clearFunction(cmd: string): Promise<AnalysisType> {
+async function clearFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
     return AnalysisType.TYPE_CLEAR;
 }
 
-async function exitFunction(cmd: string): Promise<AnalysisType> {
+async function exitFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
     return AnalysisType.TYPE_END;
 }
 
-async function optionFunction(cmd: string): Promise<AnalysisType> {
+async function optionFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
     const type = checkPromptCmd(cmd);
     switch (type) {
         case InputType.TYPE_SHOW_HISTORY:
@@ -607,12 +624,79 @@ async function optionFunction(cmd: string): Promise<AnalysisType> {
     return AnalysisType.TYPE_SKIP;
 }
 
-async function analysisCommand(cmd: string): Promise<AnalysisType> {
+async function connectFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
+    if (DEBUG) console.log("--- connectFunction");
+    const cmdList = cmd.split(" ");
+    const connectOption = {
+        profile: {
+            type: "string",
+            short: "p",
+            multiple: false,
+        },
+        region: {
+            type: "string",
+            short: "r",
+            multiple: false,
+        },
+        endpoint: {
+            type: "string",
+            short: "E",
+            multiple: false,
+        },
+        access_key: {
+            type: "string",
+            multiple: false,
+        },
+        secret_access_key: {
+            type: "string",
+            multiple: false,
+        },
+    } as const;
+    const { values } = parseArgs({
+        args: cmdList,
+        options: connectOption,
+        allowPositionals: true,
+    });
+    let isChanged = false;
+    if (values["profile"] != undefined) {
+        option.profile = values["profile"];
+        isChanged = true;
+    }
+    if (values["endpoint"] != undefined) {
+        option.endpoint = values["endpoint"];
+        isChanged = true;
+    }
+    if (values["region"] != undefined) {
+        option.region = values["region"];
+        isChanged = true;
+    }
+    if (values["access_key"] != undefined) {
+        option.accessKey = values["access_key"];
+        isChanged = true;
+    }
+    if (values["secret_access_key"] != undefined) {
+        option.secretAccessKey = values["secret_access_key"];
+        isChanged = true;
+    }
+
+    if (!isChanged) {
+        return AnalysisType.TYPE_SKIP;
+    }
+    return AnalysisType.TYPE_RECONNECT;
+}
+
+async function analysisCommand(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
     cmd = cmd.trim();
 
     for (let func of buildInFunctions) {
         if (cmd.startsWith(func.name)) {
-            return await func.func(cmd);
+            return await func.func(cmd, option);
         }
     }
     return AnalysisType.TYPE_NORMAL;
@@ -655,7 +739,7 @@ async function mainLoop(
         const type = checkInput(input);
         if (type == InputType.TYPE_COMMENT) continue;
 
-        let analysisRes = await analysisCommand(input);
+        let analysisRes = await analysisCommand(input, option);
         if (analysisRes != 0) {
             switch (analysisRes) {
                 case AnalysisType.TYPE_VIEW:
@@ -670,6 +754,11 @@ async function mainLoop(
                     if (DEBUG) console.log("----END----");
                     return 0;
                 case AnalysisType.TYPE_SKIP:
+                    continue;
+                case AnalysisType.TYPE_RECONNECT:
+                    if (DEBUG) console.log("----RECONNECT----");
+                    command = "";
+                    db = initDynamoDBAccessor(option);
                     continue;
                 case AnalysisType.TYPE_ERROR:
                     if (scriptMode) {
