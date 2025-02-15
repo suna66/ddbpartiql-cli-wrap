@@ -64,6 +64,10 @@ const buildInFunctions: Array<BuildInFuncType> = [
         name: "connect",
         func: connectFunction,
     },
+    {
+        name: "echo",
+        func: echoFunction,
+    },
 ];
 
 function checkPromptCmd(cmd: string): InputType {
@@ -686,6 +690,24 @@ async function connectFunction(
         return AnalysisType.TYPE_SKIP;
     }
     return AnalysisType.TYPE_RECONNECT;
+}
+
+async function echoFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
+    if (DEBUG) console.log("--- connectFunction");
+    const lex = new Lex(cmd);
+    lex.next();
+
+    let token = lex.next();
+    let str = "";
+    while (token != undefined) {
+        str += convertVariables(token, variables);
+        token = lex.next();
+    }
+    console.log(str);
+    return AnalysisType.TYPE_SKIP;
 }
 
 async function analysisCommand(
