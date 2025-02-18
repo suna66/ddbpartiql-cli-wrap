@@ -118,9 +118,17 @@ function commandOptions(): OptionType | undefined {
 }
 
 (function () {
-    const op = commandOptions();
-    if (op == undefined) {
-        process.exit(0);
+    let op = undefined;
+
+    try {
+        op = commandOptions();
+        if (op == undefined) {
+            process.exit(0);
+        }
+    } catch (e) {
+        console.error("error: command line option error");
+        console.log(help);
+        process.exit(1);
     }
 
     Prompt(op)
