@@ -382,14 +382,14 @@ async function executeDeleteTable(
     lex.next();
     let txt = lex.next();
     if (txt.toUpperCase() != "TABLE") {
-        console.log("drop table syntax error [%s]", cmd);
+        console.error("drop table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt.toUpperCase() == "IF") {
         txt = lex.next();
         if (txt.toUpperCase() != "EXISTS") {
-            console.log("drop table syntax error [%s]", cmd);
+            console.error("drop table syntax error [%s]", cmd);
             return false;
         }
         ignoreNotFundErr = true;
@@ -398,12 +398,12 @@ async function executeDeleteTable(
 
     let tableName = txt;
     if (tableName == undefined) {
-        console.log("drop table syntax error [%s]", cmd);
+        console.error("drop table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt != ";") {
-        console.log("drop table syntax error [%s]", cmd);
+        console.error("drop table syntax error [%s]", cmd);
         return false;
     }
 
@@ -659,36 +659,42 @@ async function connectFunction(
             multiple: false,
         },
     } as const;
-    const { values } = parseArgs({
-        args: cmdList,
-        options: connectOption,
-        allowPositionals: true,
-    });
-    let isChanged = false;
-    if (values["profile"] != undefined) {
-        option.profile = values["profile"];
-        isChanged = true;
-    }
-    if (values["endpoint"] != undefined) {
-        option.endpoint = values["endpoint"];
-        isChanged = true;
-    }
-    if (values["region"] != undefined) {
-        option.region = values["region"];
-        isChanged = true;
-    }
-    if (values["access_key"] != undefined) {
-        option.accessKey = values["access_key"];
-        isChanged = true;
-    }
-    if (values["secret_access_key"] != undefined) {
-        option.secretAccessKey = values["secret_access_key"];
-        isChanged = true;
+
+    try {
+        const { values } = parseArgs({
+            args: cmdList,
+            options: connectOption,
+            allowPositionals: true,
+        });
+        let isChanged = false;
+        if (values["profile"] != undefined) {
+            option.profile = values["profile"];
+            isChanged = true;
+        }
+        if (values["endpoint"] != undefined) {
+            option.endpoint = values["endpoint"];
+            isChanged = true;
+        }
+        if (values["region"] != undefined) {
+            option.region = values["region"];
+            isChanged = true;
+        }
+        if (values["access_key"] != undefined) {
+            option.accessKey = values["access_key"];
+            isChanged = true;
+        }
+        if (values["secret_access_key"] != undefined) {
+            option.secretAccessKey = values["secret_access_key"];
+            isChanged = true;
+        }
+        if (!isChanged) {
+            return AnalysisType.TYPE_SKIP;
+        }
+    } catch (e) {
+        console.error("connect argument error. %s", cmd);
+        return AnalysisType.TYPE_ERROR;
     }
 
-    if (!isChanged) {
-        return AnalysisType.TYPE_SKIP;
-    }
     return AnalysisType.TYPE_RECONNECT;
 }
 
