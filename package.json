@@ -1,6 +1,6 @@
 {
   "name": "@suna66/ddbpartiql-wrap",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "partiql cli for dynamodb",
   "main": "index.js",
   "scripts": {
