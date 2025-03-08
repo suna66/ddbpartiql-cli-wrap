@@ -29,13 +29,13 @@ import { parseArgs } from "node:util";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
-const promptLabel = "ddbpartiql> ";
+const promptLabel = "ddbql> ";
 const promptCmdHelp = `
   !?             show help message
   !h             show execute query history
   !v             show variables and values
   clear          clear console
-  exit           exit ddbpartiql cli
+  exit           exit ddbql cli
 `;
 
 type BuildInFuncType = {

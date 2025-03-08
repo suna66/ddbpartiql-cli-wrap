@@ -5,7 +5,7 @@ import { parseArgs } from "node:util";
 const VERSION = "0.2.0";
 const help = `
 version: ${VERSION}
-ddbpartiql [OPTIONS] [scritp file]
+ddbql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h/--help                   printing how to use
