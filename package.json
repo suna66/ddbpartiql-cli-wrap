@@ -1,6 +1,6 @@
 {
   "name": "@suna66/ddbpartiql-wrap",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "partiql cli for dynamodb",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "dist"
   ], 
   "bin": {
-    "ddbpartiql": "./bin/cli.js"
+    "ddbql": "./bin/cli.js"
   },
   "keywords": [
     "dynamodb",
@@ -32,16 +32,16 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/node": "^22.13.1",
+    "@types/node": "^22.13.8",
     "@types/minimist": "^1.2.5",
-    "rollup": "^4.34.6",
+    "rollup": "^4.34.9",
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-loader": "^9.5.2",
     "tslib": "^2.8.1",
-    "typescript": "^5.7.3"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.738.0",
-    "@aws-sdk/lib-dynamodb": "^3.744.0"
+    "@aws-sdk/client-dynamodb": "^3.758.0",
+    "@aws-sdk/lib-dynamodb": "^3.758.0"
   }
 }

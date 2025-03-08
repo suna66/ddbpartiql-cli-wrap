@@ -25,6 +25,7 @@ export enum AnalysisType {
     TYPE_VIEW = 1,
     TYPE_CLEAR = 2,
     TYPE_SKIP = 3,
+    TYPE_RECONNECT = 4,
     TYPE_END = 9,
     TYPE_ERROR = 99,
 }

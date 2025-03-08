@@ -1,4 +1,4 @@
-# ddbpartiQL-Wrap
+# ddbql-Wrap
 
 ## Overview
 
@@ -17,7 +17,7 @@ $ npm install -g .
 ## Command
 
 ```bash
-ddbpartiql [OPTIONS] [scritp file]
+ddbql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h/--help                   printing how to use
@@ -35,25 +35,25 @@ OPTIONS:
 #### Insert
 
 ```bash
-ddbpartiql> insert into "ddb-test-table" value {'id': 10, 'name': 'name1','age': 20};
+ddbql> insert into "ddb-test-table" value {'id': 10, 'name': 'name1','age': 20};
 ```
 
 #### Select
 
 ```bash
-ddbpartiql> select * from "ddb-test-table";
+ddbql> select * from "ddb-test-table";
 ```
 
 #### Select for INDEX
 
 ```bash
-ddbpartiql> select * from "ddb-test-table"."ddb-test-index" where name='name1';
+ddbql> select * from "ddb-test-table"."ddb-test-index" where name='name1';
 ```
 
 #### Update
 
 ```bash
-ddbpartiql> update "ddb-test-table"
+ddbql> update "ddb-test-table"
   set age = 25 
   set address="hogehoge"
   where id=10 and name='name1';
@@ -62,50 +62,50 @@ ddbpartiql> update "ddb-test-table"
 #### Delete
 
 ```bash
-ddbpartiql> delete from "ddb-test-table" where id=10 and name='name1';
+ddbql> delete from "ddb-test-table" where id=10 and name='name1';
 ```
 
 #### Show Tables(extension query)
 
 ```bash
-ddbpartiql> show tables;
+ddbql> show tables;
 ```
 
 #### Describe Table(extension query)
 
 ```bash
-ddbpartiql> desc "ddb-test-table";
+ddbql> desc "ddb-test-table";
 ```
 
 #### Create Table(extension query)
 
 ```bash
-ddbpartiql> create table "test-table"(id N HASH, age N RANGE, index global "index-global"(age N HASH));
+ddbql> create table "test-table"(id N HASH, age N RANGE, index global "index-global"(age N HASH));
 ```
 
 #### Drop Table(extension query)
 
 ```bash
-ddbpartiql> drop table "test-table";
+ddbql> drop table "test-table";
 ```
 
 #### Clear prompt
 
 ```bash
-ddbpartiql> clear
+ddbql> clear
 ```
 
 #### Exit partiql prompt
 
 ```bash
-ddbpartiql> exit
+ddbql> exit
 ```
 
 #### Simple variable system
 
 ```bash
-ddbpartiql> @variable = ddb-test-table;
-ddbpartiql> select * from "${variable}"
+ddbql> @variable = ddb-test-table;
+ddbql> select * from "${variable}"
 ```
 
 #### build-in variables
@@ -118,6 +118,15 @@ ddbpartiql> select * from "${variable}"
 - `sleep {integer}`   : sleep thread(ms)
 - `clear`             : clear console
 - `exit`              : exit prompt
+- `connect`           : re-connect dynamodb
+    ```
+    [OPTIOIN]
+    -p/--profile {profile}      aws profile name
+    -r/--region  {region}       aws region name
+    -E/--endpoint {url}         endpoint url
+    --access_key {value}        aws credential access key id
+    --secret_access_key {value} aws credential secret access key
+    ```
 
 
 ## Copyright and Disclaimer

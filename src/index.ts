@@ -2,10 +2,10 @@ import { Prompt } from "./prompt";
 import { OptionType } from "./types";
 import { parseArgs } from "node:util";
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const help = `
 version: ${VERSION}
-ddbpartiql [OPTIONS] [scritp file]
+ddbql [OPTIONS] [scritp file]
 
 OPTIONS:
     -h/--help                   printing how to use
@@ -118,9 +118,17 @@ function commandOptions(): OptionType | undefined {
 }
 
 (function () {
-    const op = commandOptions();
-    if (op == undefined) {
-        process.exit(0);
+    let op = undefined;
+
+    try {
+        op = commandOptions();
+        if (op == undefined) {
+            process.exit(0);
+        }
+    } catch (e) {
+        console.error("error: command line option error");
+        console.log(help);
+        process.exit(1);
     }
 
     Prompt(op)
