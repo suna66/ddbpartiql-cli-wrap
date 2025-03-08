@@ -25,7 +25,7 @@ fi
 if [ $ERROR_FLG -ne 1 ]; then
     ../bin/cli.js -r ${REGION} --endpoint ${ENDPOINT} ${TEST_SQL} ]]
     if [ $? -ne 0 ]; then
-        echo "[ERROR] ddbpartiql cli error"
+        echo "[ERROR] ddbql cli error"
         ERROR_FLG=1
     fi
 fi
@@ -33,7 +33,7 @@ fi
 if [ $ERROR_FLG -ne 1 ]; then
     ../bin/cli.js -r ${REGION} -v --format table --endpoint ${ENDPOINT} ${TEST_SQL}
     if [ $? -ne 0 ]; then
-        echo "[ERROR] ddbpartiql cli error"
+        echo "[ERROR] ddbql cli error"
         ERROR_FLG=1
     fi
 fi
