@@ -6,7 +6,11 @@ PartiQL front-end wrapper tool for DynamoDB
 
 ## Install
 
-### Build & Install
+```bash
+$ npm install -g @suna66/ddbpartiql-wrap
+```
+
+## Build & Install
 
 ```bash
 $ npm i
