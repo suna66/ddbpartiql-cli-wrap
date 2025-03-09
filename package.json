@@ -4,7 +4,7 @@
   "version": "0.3.2",
   "author": "suna66",
   "bin": {
-    "ddbql": "./bin/cli.js"
+    "ddbql": "bin/cli.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.758.0",
@@ -38,7 +38,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/suna66/ddbpartiql-cli-wrap.git"
+    "url": "git+https://github.com/suna66/ddbpartiql-cli-wrap.git"
   },
   "scripts": {
     "build": "rollup -c --environment BUILD:production",
