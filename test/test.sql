@@ -17,6 +17,9 @@ create table "test-create-table" (
     )
 );
 
+# show all tables;
+show tables;
+
 insert into "ddb-test-table" value 
   {'id': 10, 'name': 'name1','age': 20};
 

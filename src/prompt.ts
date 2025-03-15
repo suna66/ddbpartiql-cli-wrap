@@ -492,7 +492,9 @@ async function executeShowTables(
             const meta = response["$metadata"];
             console.log("http status code: ", meta.httpStatusCode);
             if (response.TableNames != undefined) {
-                console.log(JSON.stringify(response.TableNames, null, 2));
+                for (let name of response.TableNames) {
+                    console.log(name);
+                }
             }
             if (response.LastEvaluatedTableName != undefined) {
                 lastEvaluatedTableName = response.LastEvaluatedTableName;
