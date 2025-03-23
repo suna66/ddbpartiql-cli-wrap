@@ -1,10 +1,12 @@
 export class Lex {
     sentence: string;
     text: string | undefined;
+    incEnclose: boolean;
 
     constructor(_sentence: string) {
         this.sentence = _sentence;
         this.text = undefined;
+        this.incEnclose = false;
     }
 
     next(): string {
@@ -20,8 +22,13 @@ export class Lex {
                 case "\t":
                 case "\n":
                     continue;
+                case "'":
                 case '"':
+                    var enclose = c;
                     var str: string = "";
+                    if (this.incEnclose) {
+                        str = c;
+                    }
                     var index: number = 0;
                     while (1) {
                         c = this.sentence[index++];
@@ -41,7 +48,10 @@ export class Lex {
                                     break;
                             }
                         } else {
-                            if (c == '"' || c == undefined || c == null) {
+                            if (c == enclose || c == undefined || c == null) {
+                                if (this.incEnclose && c == enclose) {
+                                    str += enclose;
+                                }
                                 break;
                             }
                         }
@@ -89,5 +99,9 @@ export class Lex {
 
     getText(): string | undefined {
         return this.text;
+    }
+
+    setIncludeEnclose(flag: boolean) {
+        this.incEnclose = flag;
     }
 }

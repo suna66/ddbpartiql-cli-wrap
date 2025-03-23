@@ -2,7 +2,7 @@ import { Prompt } from "./prompt";
 import { OptionType } from "./types";
 import { parseArgs } from "node:util";
 
-const VERSION = "0.3.2";
+const VERSION = "0.4.0";
 const help = `
 version: ${VERSION}
 ddbql [OPTIONS] [scritp file]
@@ -16,6 +16,7 @@ OPTIONS:
     -F/--format {json/table}    query response format(default: json)
     --access_key <value>        aws credential access key id
     --secret_access_key <value> aws credential secret access key
+    --nostop                    not stop script when error is occurred
 `;
 
 const options = {
@@ -56,6 +57,10 @@ const options = {
         type: "string",
         multiple: false,
     },
+    nostop: {
+        type: "boolean",
+        multiple: false,
+    },
 } as const;
 
 function commandOptions(): OptionType | undefined {
@@ -74,6 +79,7 @@ function commandOptions(): OptionType | undefined {
     let secretAccessKey = undefined;
     let script = undefined;
     let debug = false;
+    let nostop = false;
     if (values["help"] != undefined) {
         console.log(help);
         return undefined;
@@ -99,6 +105,9 @@ function commandOptions(): OptionType | undefined {
     if (values["secret_access_key"] != undefined) {
         secretAccessKey = values["secret_access_key"];
     }
+    if (values["nostop"] != undefined) {
+        nostop = true;
+    }
 
     if (positionals != undefined) {
         if (positionals.length > 0) {
@@ -114,6 +123,7 @@ function commandOptions(): OptionType | undefined {
         secretAccessKey,
         script,
         debug,
+        nostop,
     };
 }
 
