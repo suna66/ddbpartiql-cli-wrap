@@ -51,6 +51,7 @@ select * from "${table_name}";
 select * from ${table_name};
 
 select * from "ddb-test-table"."ddb-test-index" where name='name1';
+select * from ddb-test-table.ddb-test-index where name='name1';
 
 delete from "ddb-test-table"
 where id=10 and name='name1';
