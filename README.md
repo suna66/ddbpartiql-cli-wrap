@@ -1,4 +1,4 @@
-# ddbql-Wrap
+# ddbql - dynamodb partiql cli tool
 
 ## Overview
 
@@ -32,6 +32,7 @@ OPTIONS:
     -F/--format {json/table}    query response format(default: json)
     --access_key {value}        aws credential access key id
     --secret_access_key {value} aws credential secret access key
+    --nostop                    not stop script when error is occurred
 ```
 
 ## Example
@@ -131,6 +132,7 @@ ddbql> select * from "${variable}"
     --access_key {value}        aws credential access key id
     --secret_access_key {value} aws credential secret access key
     ```
+- `. {script file}`   : load script file
 
 
 ## Copyright and Disclaimer

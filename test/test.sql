@@ -50,6 +50,9 @@ select * from "${table_name}";
 
 select * from ${table_name};
 
+. ./sub.sql
+. ./aaaa.sql
+
 select * from "ddb-test-table"."ddb-test-index" where name='name1';
 select * from ddb-test-table.ddb-test-index where name='name1';
 

@@ -7,6 +7,7 @@ export type OptionType = {
     secretAccessKey: undefined | string;
     script: undefined | string;
     debug: undefined | boolean;
+    nostop: undefined | boolean;
 };
 
 export enum InputType {
