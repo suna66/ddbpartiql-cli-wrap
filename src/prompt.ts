@@ -30,6 +30,8 @@ import { paritqlComplement } from "./complement";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
+const scriptList: Array<FileReader> = [];
+
 const promptLabel = "ddbql> ";
 const promptCmdHelp = `
   !?             show help message
@@ -64,6 +66,10 @@ const buildInFunctions: Array<BuildInFuncType> = [
     {
         name: "connect",
         func: connectFunction,
+    },
+    {
+        name: ".",
+        func: loadScriptFunction,
     },
     {
         name: "echo",
@@ -702,6 +708,24 @@ async function connectFunction(
     return AnalysisType.TYPE_RECONNECT;
 }
 
+async function loadScriptFunction(
+    cmd: string,
+    option: OptionType
+): Promise<AnalysisType> {
+    let cmdList = cmd.split(" ");
+    let fileName = cmdList[1];
+
+    if (DEBUG) console.log(`load script file = ${fileName}`);
+
+    let script = new FileReader();
+    if (!script.load(fileName)) {
+        console.log(`error load script(not found ${fileName})`);
+        return AnalysisType.TYPE_ERROR;
+    }
+    scriptList.push(script);
+    return AnalysisType.TYPE_SKIP;
+}
+
 async function echoFunction(
     cmd: string,
     option: OptionType
@@ -749,21 +773,38 @@ async function mainLoop(
 
     if (fileReader != undefined) {
         scriptMode = true;
+        scriptList.push(fileReader);
     }
 
     while (1) {
         if (!scriptMode) {
-            input = await keyInput(promptLabel);
+            if (scriptList.length > 0) {
+                let script = scriptList.slice(-1)[0];
+                input = script.read();
+                if (input == undefined) {
+                    scriptList.pop();
+                }
+            } else {
+                input = await keyInput(promptLabel);
+            }
             if (input == undefined) {
                 continue;
             }
         } else {
-            input = fileReader.read();
-            if (input == undefined) {
+            if (scriptList.length > 0) {
+                let script = scriptList.slice(-1)[0];
+                input = script.read();
+                if (input == undefined) {
+                    scriptList.pop();
+                    continue;
+                }
+            } else {
+                if (DEBUG) console.log("script file is over");
                 break;
             }
-            if (DEBUG) console.log(input);
         }
+        if (DEBUG) console.log(input);
+
         input = trimStr(input);
         if (input.length == 0) {
             continue;
@@ -793,7 +834,7 @@ async function mainLoop(
                     db = initDynamoDBAccessor(option);
                     continue;
                 case AnalysisType.TYPE_ERROR:
-                    if (scriptMode) {
+                    if (scriptMode && !option.nostop) {
                         if (DEBUG) console.error("error for script mode");
                         return -1;
                     }
@@ -808,7 +849,7 @@ async function mainLoop(
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
             const ok = await executeCommand(db, command, option);
-            if (!ok && scriptMode) {
+            if (!ok && scriptMode && !option.nostop) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
             }
