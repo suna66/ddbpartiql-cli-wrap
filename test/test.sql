@@ -26,6 +26,10 @@ insert into "ddb-test-table" value
 insert into "ddb-test-table" value 
   {'id': 11, 'name': '${UUID}','age': 20, 'update_at': ${NOW}};
 
+# complement test(insert)
+insert into ddb-test-table value 
+  {"id": 12, "name": "name2","age": 30, "update_at": ${NOW}};
+
 @age = 30;
 @table_name = ddb-test-table;
 
@@ -38,12 +42,21 @@ update "${table_name}"
   set age = ${age} 
   where id=10 and name='name1';
 
+update ${table_name}
+  set age = 50
+  where id=12 and name='name2';
+
 select * from "${table_name}";
+
+select * from ${table_name};
 
 select * from "ddb-test-table"."ddb-test-index" where name='name1';
 
 delete from "ddb-test-table"
 where id=10 and name='name1';
+
+delete from ddb-test-table
+where id=12 and name="name2";
 
 select * from "ddb-test-table";
 

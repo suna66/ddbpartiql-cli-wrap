@@ -76,3 +76,47 @@ export function convertVariables(
     }
     return rs;
 }
+
+export function removeChar(src: string, removeCh: string): string {
+    if (src == undefined) return undefined;
+
+    let result = "";
+    for (let c of src) {
+        if (c != removeCh) {
+            result += c;
+        }
+    }
+    return result;
+}
+
+export function surroundChar(str: string, surround: string): string {
+    let result = str;
+    let len = str.length;
+    let first = str[0];
+    let last = str[len - 1];
+    if (first != surround) {
+        result = surround + result;
+    }
+    if (last != surround) {
+        result += surround;
+    }
+    return result;
+}
+
+export function replaceCharAll(
+    src: string,
+    pattern: string,
+    replacement: string
+): string {
+    let buf = "";
+
+    for (let c of src) {
+        if (c == pattern) {
+            buf += replacement;
+        } else {
+            buf += c;
+        }
+    }
+
+    return buf;
+}
