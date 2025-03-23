@@ -26,6 +26,7 @@ import {
 import { KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
+import { paritqlComplement } from "./complement";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
@@ -122,8 +123,9 @@ async function executePartiQL(
     try {
         let originSQL = sql;
         sql = convertVariables(semicolonToBlank(sql), variables);
-        console.log(sql);
-        const response = await db.execute(sql);
+        let complementSql = paritqlComplement(sql);
+        console.log(complementSql);
+        const response = await db.execute(complementSql);
         if (DEBUG) console.log("%o", response);
 
         if (response != undefined) {
