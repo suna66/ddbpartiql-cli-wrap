@@ -88,6 +88,12 @@ ddbql> desc "ddb-test-table";
 ddbql> create table "test-table"(id N HASH, age N RANGE, index global "index-global"(age N HASH));
 ```
 
+#### Trancate Table(extension query)
+
+```bash
+ddbpq> trancate table "test-table";
+```
+
 #### Drop Table(extension query)
 
 ```bash
