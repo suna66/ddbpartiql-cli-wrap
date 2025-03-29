@@ -130,6 +130,10 @@ async function executePartiQL(
         let originSQL = sql;
         sql = convertVariables(semicolonToBlank(sql), variables);
         let complementSql = paritqlComplement(sql);
+        if (complementSql == undefined) {
+            console.error("partiql syntax error %s", originSQL);
+            return false;
+        }
         console.log(complementSql);
         const response = await db.execute(complementSql);
         if (DEBUG) console.log("%o", response);
