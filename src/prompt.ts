@@ -23,7 +23,7 @@ import {
     DEBUG,
     setDebug,
 } from "./utils";
-import { KeyType } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { paritqlComplement } from "./complement";
@@ -519,6 +519,75 @@ async function executeShowTables(
     return true;
 }
 
+async function executeTrancateTable(
+    db: DynamoDBAccessor,
+    cmd: string
+): Promise<boolean> {
+    let originCmd = cmd;
+    cmd = convertVariables(cmd, variables);
+    const lex = new Lex(cmd);
+    let txt = lex.next();
+    if (txt.toUpperCase() != "TRANCATE") {
+        console.error("trancate table syntax error [%s]", cmd);
+        return false;
+    }
+    txt = lex.next();
+    if (txt.toUpperCase() != "TABLE") {
+        console.error("trancate table syntax error [%s]", cmd);
+        return false;
+    }
+    const tableName = lex.next();
+    if (tableName == undefined) {
+        console.error("trancate table syntax error [%s]", cmd);
+        return false;
+    }
+    txt = lex.next();
+    if (txt != ";") {
+        console.error("trancate table syntax error [%s]", cmd);
+        return false;
+    }
+    try {
+        console.log(cmd);
+        const tableInfo = await db.describe(tableName);
+        if (tableInfo == undefined) {
+            console.error("table[%s] not found", tableName);
+            return false;
+        }
+        const keySchema = tableInfo.Table.KeySchema;
+        let lastEvaluateKey = undefined;
+        while (true) {
+            const scan = await db.scanTable(tableName);
+            lastEvaluateKey = scan.LastEvaluatedKey;
+            const items = scan.Items ?? [];
+
+            for (let item of items) {
+                const keys: Record<string, AttributeValue> = {};
+                for (let key of keySchema) {
+                    keys[key.AttributeName] = item[key.AttributeName];
+                }
+                const deleteItemResponse = await db.deleteItem(tableName, keys);
+                if (deleteItemResponse == undefined) {
+                    console.error(
+                        "table[%s] trancacte table is failed",
+                        tableName
+                    );
+                    return false;
+                }
+            }
+
+            if (lastEvaluateKey == undefined) {
+                break;
+            }
+        }
+        addHistory(originCmd);
+    } catch (e) {
+        console.error(e.toString());
+        return false;
+    }
+
+    return true;
+}
+
 async function executeCommand(
     db: DynamoDBAccessor,
     cmd: string,
@@ -539,6 +608,8 @@ async function executeCommand(
         ret = await executeDeleteTable(db, cmd);
     } else if (cmd.startsWith("show") || cmd.startsWith("SHOW")) {
         ret = await executeShowTables(db, cmd);
+    } else if (cmd.startsWith("trancate") || cmd.startsWith("TRANCATE")) {
+        ret = await executeTrancateTable(db, cmd);
     } else {
         ret = await executePartiQL(db, cmd, option);
     }

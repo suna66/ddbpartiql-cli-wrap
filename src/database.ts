@@ -10,6 +10,11 @@ import {
     ResourceNotFoundException,
     ListTablesCommand,
     ListTablesCommandOutput,
+    ScanCommand,
+    ScanCommandOutput,
+    DeleteItemCommand,
+    DeleteItemCommandOutput,
+    AttributeValue,
 } from "@aws-sdk/client-dynamodb";
 import {
     DynamoDBDocumentClient,
@@ -17,6 +22,7 @@ import {
     ExecuteStatementCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 import { DEBUG } from "./utils";
+import { table } from "node:console";
 
 export type DynamoDBConfig = {
     endpoint: string | undefined;
@@ -213,12 +219,34 @@ export default class DynamoDBAccessor {
     }
 
     async showTables(
-      lastEvaluatedTableName: string
+        lastEvaluatedTableName: string
     ): Promise<ListTablesCommandOutput> {
-      const command = new ListTablesCommand({
-        ExclusiveStartTableName: lastEvaluatedTableName,
-      });
-      const response = await this.docClient.send(command);
-      return response;
+        const command = new ListTablesCommand({
+            ExclusiveStartTableName: lastEvaluatedTableName,
+        });
+        const response = await this.docClient.send(command);
+        return response;
+    }
+
+    async scanTable(tableName: string): Promise<ScanCommandOutput> {
+        const command = new ScanCommand({
+            TableName: tableName,
+            Limit: 25,
+        });
+
+        const response = await this.docClient.send(command);
+        return response;
+    }
+
+    async deleteItem(
+        tableName: string,
+        keys: Record<string, AttributeValue>
+    ): Promise<DeleteItemCommandOutput> {
+        const command = new DeleteItemCommand({
+            TableName: tableName,
+            Key: keys,
+        });
+        const response = await this.docClient.send(command);
+        return response;
     }
 }
