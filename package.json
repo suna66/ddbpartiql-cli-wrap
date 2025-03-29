@@ -1,7 +1,7 @@
 {
   "name": "@suna66/ddbpartiql-wrap",
   "description": "partiql cli for dynamodb",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": "suna66",
   "bin": {
     "ddbql": "bin/cli.js"
