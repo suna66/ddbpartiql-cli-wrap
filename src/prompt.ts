@@ -521,7 +521,7 @@ async function executeShowTables(
     return true;
 }
 
-async function executeTrancateTable(
+async function executeTruncateTable(
     db: DynamoDBAccessor,
     cmd: string
 ): Promise<boolean> {
@@ -529,23 +529,23 @@ async function executeTrancateTable(
     cmd = convertVariables(cmd, variables);
     const lex = new Lex(cmd);
     let txt = lex.next();
-    if (txt.toUpperCase() != "TRANCATE") {
-        console.error("trancate table syntax error [%s]", cmd);
+    if (txt.toUpperCase() != "TRUNCATE") {
+        console.error("truncate table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt.toUpperCase() != "TABLE") {
-        console.error("trancate table syntax error [%s]", cmd);
+        console.error("truncate table syntax error [%s]", cmd);
         return false;
     }
     const tableName = lex.next();
     if (tableName == undefined) {
-        console.error("trancate table syntax error [%s]", cmd);
+        console.error("truncate table syntax error [%s]", cmd);
         return false;
     }
     txt = lex.next();
     if (txt != ";") {
-        console.error("trancate table syntax error [%s]", cmd);
+        console.error("truncate table syntax error [%s]", cmd);
         return false;
     }
     try {
@@ -557,6 +557,7 @@ async function executeTrancateTable(
         }
         const keySchema = tableInfo.Table.KeySchema;
         let lastEvaluateKey = undefined;
+        let deleteItems = 0;
         while (true) {
             const scan = await db.scanTable(tableName);
             lastEvaluateKey = scan.LastEvaluatedKey;
@@ -570,17 +571,19 @@ async function executeTrancateTable(
                 const deleteItemResponse = await db.deleteItem(tableName, keys);
                 if (deleteItemResponse == undefined) {
                     console.error(
-                        "table[%s] trancacte table is failed",
+                        "table[%s] truncate table is failed",
                         tableName
                     );
                     return false;
                 }
+                deleteItems++;
             }
 
             if (lastEvaluateKey == undefined) {
                 break;
             }
         }
+        console.log("deleted %d items", deleteItems);
         addHistory(originCmd);
     } catch (e) {
         console.error(e.toString());
@@ -610,8 +613,8 @@ async function executeCommand(
         ret = await executeDeleteTable(db, cmd);
     } else if (cmd.startsWith("show") || cmd.startsWith("SHOW")) {
         ret = await executeShowTables(db, cmd);
-    } else if (cmd.startsWith("trancate") || cmd.startsWith("TRANCATE")) {
-        ret = await executeTrancateTable(db, cmd);
+    } else if (cmd.startsWith("truncate") || cmd.startsWith("TRUNCATE")) {
+        ret = await executeTruncateTable(db, cmd);
     } else {
         ret = await executePartiQL(db, cmd, option);
     }
