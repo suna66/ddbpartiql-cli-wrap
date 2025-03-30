@@ -48,7 +48,10 @@ update ${table_name}
 
 select * from "${table_name}";
 
-select * from ${table_name};
+select * from 
+${table_name};
+
+select    *     from          ${table_name};
 
 . ./sub.sql
 # . ./aaaa.sql
