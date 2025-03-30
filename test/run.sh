@@ -16,6 +16,9 @@ export AWS_SECRET_ACCESS_KEY=dummy
 export AWS_DEFAULT_REGION=${REGION}
 export no_proxy=localhost,127.0.0.1,[::1]
 
+# wait 5sec for booting localstack
+sleep 5
+
 aws dynamodb create-table --cli-input-json file://${TEST_TABLE_JSON} --endpoint-url=${ENDPOINT} --no-cli-pager
 if [ $? -ne 0 ]; then
     echo "[ERROR] create table error"
