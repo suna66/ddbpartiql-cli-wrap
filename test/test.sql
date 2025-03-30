@@ -148,7 +148,7 @@ insert into "test-create-table" value
   {'id': 54, 'name': '${UUID}','age': 20, 'update_at': ${NOW}};
 
 select * from test-create-table;
-trancate table test-create-table;
+truncate table test-create-table;
 
 select * from test-create-table;
 
