@@ -134,7 +134,7 @@ async function executePartiQL(
             console.error("partiql syntax error %s", originSQL);
             return false;
         }
-        console.log(complementSql);
+        if (DEBUG) console.log(complementSql);
         const response = await db.execute(complementSql);
         if (DEBUG) console.log("%o", response);
 
@@ -181,7 +181,7 @@ async function executeDesc(
         return false;
     }
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.describe(tableName);
         if (response != undefined) {
             const meta = response["$metadata"];
@@ -206,7 +206,6 @@ async function executeCreateTable(
     let originSQL = cmd;
 
     cmd = convertVariables(cmd, variables);
-    if (DEBUG) console.log(cmd);
     const lex = new Lex(cmd);
     lex.next();
     let txt = lex.next();
@@ -364,7 +363,7 @@ async function executeCreateTable(
     };
     try {
         if (DEBUG) console.log(JSON.stringify(req, null, 2));
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.createTable(req);
 
         if (response != undefined) {
@@ -389,7 +388,6 @@ async function executeDeleteTable(
     let originSQL = cmd;
     let ignoreNotFundErr = false;
     cmd = convertVariables(cmd, variables);
-    if (DEBUG) console.log(cmd);
     const lex = new Lex(cmd);
     lex.next();
     let txt = lex.next();
@@ -420,7 +418,7 @@ async function executeDeleteTable(
     }
 
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.deleteTable(tableName, ignoreNotFundErr);
 
         if (response != undefined) {
@@ -494,7 +492,7 @@ async function executeShowTables(
         return false;
     }
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         let lastEvaluatedTableName = undefined;
         while (true) {
             let response = await db.showTables(lastEvaluatedTableName);
@@ -551,7 +549,7 @@ async function executeTrancateTable(
         return false;
     }
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const tableInfo = await db.describe(tableName);
         if (tableInfo == undefined) {
             console.error("table[%s] not found", tableName);
