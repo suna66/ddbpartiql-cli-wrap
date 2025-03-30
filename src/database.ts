@@ -78,9 +78,13 @@ export default class DynamoDBAccessor {
         this.docClient = DynamoDBDocumentClient.from(client);
     }
 
-    async execute(sql: string): Promise<ExecuteStatementCommandOutput> {
+    async execute(
+        sql: string,
+        limit: number
+    ): Promise<ExecuteStatementCommandOutput> {
         const statement = new ExecuteStatementCommand({
             Statement: sql,
+            Limit: limit > 0 ? limit : undefined,
         });
         const response = await this.docClient.send(statement);
 
