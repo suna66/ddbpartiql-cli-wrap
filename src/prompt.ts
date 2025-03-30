@@ -151,6 +151,12 @@ async function executePartiQL(
                     console.log(JSON.stringify(response.Items, null, 2));
                 }
             }
+            if (response.LastEvaluatedKey != undefined) {
+                console.log(JSON.stringify(response.LastEvaluatedKey, null, 2));
+            }
+            if (response.NextToken != undefined) {
+                console.log("NextToken: %s", response.NextToken);
+            }
         }
         addHistory(originSQL);
     } catch (e) {
