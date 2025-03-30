@@ -135,7 +135,10 @@ async function executePartiQL(
             return false;
         }
         if (DEBUG) console.log(complementSql);
-        const response = await db.execute(complementSql);
+        const response = await db.execute(
+            complementSql.sql,
+            complementSql.limit
+        );
         if (DEBUG) console.log("%o", response);
 
         if (response != undefined) {

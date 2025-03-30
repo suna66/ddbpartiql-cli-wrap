@@ -2,10 +2,16 @@ import { after } from "node:test";
 import { Lex } from "./lex";
 import { removeChar, replaceCharAll, surroundChar } from "./utils";
 
-function selectQueryComplement(lex: Lex): string {
+export type QueryComplementResult = {
+    sql: string;
+    limit?: number;
+};
+
+function selectQueryComplement(lex: Lex): QueryComplementResult {
     lex.setIncSpace(true);
     let complementArray: Array<string> = [];
     let token = lex.getText();
+    let limitSize = -1;
 
     complementArray.push(token);
     token = lex.next();
@@ -35,21 +41,37 @@ function selectQueryComplement(lex: Lex): string {
         token = lex.next();
     }
     if (token == undefined) {
-        return complementArray.join("");
+        return {
+            sql: complementArray.join(""),
+            limit: limitSize,
+        };
     }
     lex.setIncludeEnclose(true);
     complementArray.push(token);
     token = lex.next();
     while (token != undefined) {
+        if (token == "limit" || token == "LIMIT") {
+            lex.next();
+            let limitValue = lex.next();
+            limitSize = parseInt(limitValue, 10);
+            if (isNaN(limitSize)) {
+                return undefined;
+            }
+            token = lex.next();
+            continue;
+        }
         token = replaceCharAll(token, '"', "'");
         complementArray.push(token);
         token = lex.next();
     }
 
-    return complementArray.join("");
+    return {
+        sql: complementArray.join(""),
+        limit: limitSize,
+    };
 }
 
-function insertQueryComplement(lex: Lex): string {
+function insertQueryComplement(lex: Lex): QueryComplementResult {
     lex.setIncSpace(true);
     let complementArray: Array<string> = [];
     let token = lex.getText();
@@ -98,10 +120,13 @@ function insertQueryComplement(lex: Lex): string {
         token = lex.next();
     }
 
-    return complementArray.join("");
+    return {
+        sql: complementArray.join(""),
+        limit: -1,
+    };
 }
 
-function updateQueryComplement(lex: Lex): string {
+function updateQueryComplement(lex: Lex): QueryComplementResult {
     lex.setIncSpace(true);
     let complementArray: Array<string> = [];
     let token = lex.getText();
@@ -123,10 +148,13 @@ function updateQueryComplement(lex: Lex): string {
         complementArray.push(token);
         token = lex.next();
     }
-    return complementArray.join("");
+    return {
+        sql: complementArray.join(""),
+        limit: -1,
+    };
 }
 
-function deleteQueryComplement(lex: Lex): string {
+function deleteQueryComplement(lex: Lex): QueryComplementResult {
     lex.setIncSpace(true);
     let complementArray: Array<string> = [];
     let token = lex.getText();
@@ -160,14 +188,17 @@ function deleteQueryComplement(lex: Lex): string {
         token = lex.next();
     }
 
-    return complementArray.join("");
+    return {
+        sql: complementArray.join(""),
+        limit: -1,
+    };
 }
 
-export function paritqlComplement(sql: string): string {
+export function paritqlComplement(sql: string): QueryComplementResult {
     let lex = new Lex(sql);
     let token = lex.next();
 
-    let complementSQL: string = undefined;
+    let complementSQL: QueryComplementResult = undefined;
     token = token.toUpperCase();
     switch (token) {
         case "SELECT":
