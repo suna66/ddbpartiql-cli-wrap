@@ -2,34 +2,51 @@ export class Lex {
     sentence: string;
     text: string | undefined;
     incEnclose: boolean;
+    incSpace: boolean;
 
     constructor(_sentence: string) {
         this.sentence = _sentence;
         this.text = undefined;
         this.incEnclose = false;
+        this.incSpace = false;
     }
 
     next(): string {
         while (1) {
-            var c: string = this.sentence[0];
+            let c: string = this.sentence[0];
             if (c === undefined || c === null) {
                 return undefined;
             }
             this.sentence = this.sentence.slice(1);
             switch (c) {
                 case " ":
+                    if (this.incSpace) {
+                        this.text = c;
+                        let index: number = 0;
+                        while (1) {
+                            c = this.sentence[index++];
+                            if (c != " ") {
+                                break;
+                            }
+                        }
+                        index--;
+                        if (index > 0)
+                            this.sentence = this.sentence.slice(index);
+                        return this.text;
+                        break;
+                    }
                 case "\r":
                 case "\t":
                 case "\n":
                     continue;
                 case "'":
                 case '"':
-                    var enclose = c;
-                    var str: string = "";
+                    let enclose = c;
+                    let str: string = "";
                     if (this.incEnclose) {
                         str = c;
                     }
-                    var index: number = 0;
+                    let index: number = 0;
                     while (1) {
                         c = this.sentence[index++];
                         if (c == "\\") {
@@ -70,8 +87,8 @@ export class Lex {
                 c == "_" ||
                 c == "-"
             ) {
-                var str: string = c;
-                var index: number = 0;
+                let str: string = c;
+                let index: number = 0;
                 while (1) {
                     c = this.sentence[index++];
                     if (
@@ -103,5 +120,9 @@ export class Lex {
 
     setIncludeEnclose(flag: boolean) {
         this.incEnclose = flag;
+    }
+
+    setIncSpace(flag: boolean) {
+        this.incSpace = flag;
     }
 }

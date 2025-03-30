@@ -23,7 +23,7 @@ import {
     DEBUG,
     setDebug,
 } from "./utils";
-import { KeyType } from "@aws-sdk/client-dynamodb";
+import { AttributeValue, KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { paritqlComplement } from "./complement";
@@ -130,8 +130,15 @@ async function executePartiQL(
         let originSQL = sql;
         sql = convertVariables(semicolonToBlank(sql), variables);
         let complementSql = paritqlComplement(sql);
-        console.log(complementSql);
-        const response = await db.execute(complementSql);
+        if (complementSql == undefined) {
+            console.error("partiql syntax error %s", originSQL);
+            return false;
+        }
+        if (DEBUG) console.log(complementSql);
+        const response = await db.execute(
+            complementSql.sql,
+            complementSql.limit
+        );
         if (DEBUG) console.log("%o", response);
 
         if (response != undefined) {
@@ -143,6 +150,12 @@ async function executePartiQL(
                 } else {
                     console.log(JSON.stringify(response.Items, null, 2));
                 }
+            }
+            if (response.LastEvaluatedKey != undefined) {
+                console.log(JSON.stringify(response.LastEvaluatedKey, null, 2));
+            }
+            if (response.NextToken != undefined) {
+                console.log("NextToken: %s", response.NextToken);
             }
         }
         addHistory(originSQL);
@@ -177,7 +190,7 @@ async function executeDesc(
         return false;
     }
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.describe(tableName);
         if (response != undefined) {
             const meta = response["$metadata"];
@@ -202,7 +215,6 @@ async function executeCreateTable(
     let originSQL = cmd;
 
     cmd = convertVariables(cmd, variables);
-    if (DEBUG) console.log(cmd);
     const lex = new Lex(cmd);
     lex.next();
     let txt = lex.next();
@@ -360,7 +372,7 @@ async function executeCreateTable(
     };
     try {
         if (DEBUG) console.log(JSON.stringify(req, null, 2));
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.createTable(req);
 
         if (response != undefined) {
@@ -385,7 +397,6 @@ async function executeDeleteTable(
     let originSQL = cmd;
     let ignoreNotFundErr = false;
     cmd = convertVariables(cmd, variables);
-    if (DEBUG) console.log(cmd);
     const lex = new Lex(cmd);
     lex.next();
     let txt = lex.next();
@@ -416,7 +427,7 @@ async function executeDeleteTable(
     }
 
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         const response = await db.deleteTable(tableName, ignoreNotFundErr);
 
         if (response != undefined) {
@@ -490,7 +501,7 @@ async function executeShowTables(
         return false;
     }
     try {
-        console.log(cmd);
+        if (DEBUG) console.log(cmd);
         let lastEvaluatedTableName = undefined;
         while (true) {
             let response = await db.showTables(lastEvaluatedTableName);
@@ -510,6 +521,78 @@ async function executeShowTables(
                 break;
             }
         }
+        addHistory(originCmd);
+    } catch (e) {
+        console.error(e.toString());
+        return false;
+    }
+
+    return true;
+}
+
+async function executeTruncateTable(
+    db: DynamoDBAccessor,
+    cmd: string
+): Promise<boolean> {
+    let originCmd = cmd;
+    cmd = convertVariables(cmd, variables);
+    const lex = new Lex(cmd);
+    let txt = lex.next();
+    if (txt.toUpperCase() != "TRUNCATE") {
+        console.error("truncate table syntax error [%s]", cmd);
+        return false;
+    }
+    txt = lex.next();
+    if (txt.toUpperCase() != "TABLE") {
+        console.error("truncate table syntax error [%s]", cmd);
+        return false;
+    }
+    const tableName = lex.next();
+    if (tableName == undefined) {
+        console.error("truncate table syntax error [%s]", cmd);
+        return false;
+    }
+    txt = lex.next();
+    if (txt != ";") {
+        console.error("truncate table syntax error [%s]", cmd);
+        return false;
+    }
+    try {
+        if (DEBUG) console.log(cmd);
+        const tableInfo = await db.describe(tableName);
+        if (tableInfo == undefined) {
+            console.error("table[%s] not found", tableName);
+            return false;
+        }
+        const keySchema = tableInfo.Table.KeySchema;
+        let lastEvaluateKey = undefined;
+        let deleteItems = 0;
+        while (true) {
+            const scan = await db.scanTable(tableName);
+            lastEvaluateKey = scan.LastEvaluatedKey;
+            const items = scan.Items ?? [];
+
+            for (let item of items) {
+                const keys: Record<string, AttributeValue> = {};
+                for (let key of keySchema) {
+                    keys[key.AttributeName] = item[key.AttributeName];
+                }
+                const deleteItemResponse = await db.deleteItem(tableName, keys);
+                if (deleteItemResponse == undefined) {
+                    console.error(
+                        "table[%s] truncate table is failed",
+                        tableName
+                    );
+                    return false;
+                }
+                deleteItems++;
+            }
+
+            if (lastEvaluateKey == undefined) {
+                break;
+            }
+        }
+        console.log("deleted %d items", deleteItems);
         addHistory(originCmd);
     } catch (e) {
         console.error(e.toString());
@@ -539,6 +622,8 @@ async function executeCommand(
         ret = await executeDeleteTable(db, cmd);
     } else if (cmd.startsWith("show") || cmd.startsWith("SHOW")) {
         ret = await executeShowTables(db, cmd);
+    } else if (cmd.startsWith("truncate") || cmd.startsWith("TRUNCATE")) {
+        ret = await executeTruncateTable(db, cmd);
     } else {
         ret = await executePartiQL(db, cmd, option);
     }
