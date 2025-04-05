@@ -27,9 +27,11 @@ import { AttributeValue, KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { paritqlComplement } from "./complement";
+import { unescape } from "node:querystring";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
+let currentNextToken: string | undefined = undefined;
 const scriptList: Array<FileReader> = [];
 
 const promptLabel = "ddbql> ";
@@ -124,10 +126,16 @@ function addHistory(cmd: string) {
 async function executePartiQL(
     db: DynamoDBAccessor,
     sql: string,
-    option: OptionType
+    option: OptionType,
+    nextToken: string
 ): Promise<boolean> {
     try {
+        currentNextToken = undefined;
         let originSQL = sql;
+        if (sql == undefined || sql.length == 0) {
+            console.error("unknown query: undefined or blank");
+            return false;
+        }
         sql = convertVariables(semicolonToBlank(sql), variables);
         let complementSql = paritqlComplement(sql);
         if (complementSql == undefined) {
@@ -137,7 +145,8 @@ async function executePartiQL(
         if (DEBUG) console.log(complementSql);
         const response = await db.execute(
             complementSql.sql,
-            complementSql.limit
+            complementSql.limit,
+            nextToken
         );
         if (DEBUG) console.log("%o", response);
 
@@ -155,6 +164,7 @@ async function executePartiQL(
                 console.log(JSON.stringify(response.LastEvaluatedKey, null, 2));
             }
             if (response.NextToken != undefined) {
+                currentNextToken = response.NextToken;
                 console.log("NextToken: %s", response.NextToken);
             }
         }
@@ -624,8 +634,11 @@ async function executeCommand(
         ret = await executeShowTables(db, cmd);
     } else if (cmd.startsWith("truncate") || cmd.startsWith("TRUNCATE")) {
         ret = await executeTruncateTable(db, cmd);
+    } else if (cmd.startsWith("run") || cmd.startsWith("RUN")) {
+        let latestCmd = historyList.slice(-1)[0];
+        ret = await executePartiQL(db, latestCmd, option, currentNextToken);
     } else {
-        ret = await executePartiQL(db, cmd, option);
+        ret = await executePartiQL(db, cmd, option, undefined);
     }
     return ret;
 }

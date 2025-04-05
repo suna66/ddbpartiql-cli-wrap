@@ -49,6 +49,11 @@ ddbql> insert into "ddb-test-table" value {'id': 10, 'name': 'name1','age': 20};
 ddbql> select * from "ddb-test-table";
 ```
 
+You can also use the LIMIT clause.
+```bash
+ddbql> select * from "ddb-test-table" limit 5;
+```
+
 #### Select for INDEX
 
 ```bash
@@ -99,6 +104,14 @@ ddbpq> truncate table "test-table";
 ```bash
 ddbql> drop table "test-table";
 ```
+
+#### Re-execute previous query
+
+```bash
+ddbql> run;
+```
+This query adds the NextToken, if  previous query returned NextToken from DynamoDB.
+Therefore, if you want to retrieve the remaining data, you can use this command.
 
 #### Clear prompt
 
