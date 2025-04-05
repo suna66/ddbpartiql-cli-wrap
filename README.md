@@ -105,7 +105,7 @@ ddbpq> truncate table "test-table";
 ddbql> drop table "test-table";
 ```
 
-#### Re-execute previous query
+#### Re-execute previous query(extension query)
 
 ```bash
 ddbql> run;
