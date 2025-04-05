@@ -131,11 +131,12 @@ async function executePartiQL(
     try {
         currentNextToken = undefined;
         let originSQL = sql;
-        if (sql == undefined || sql.length == 0) {
+        sql = semicolonToBlank(sql);
+        if (sql == undefined || sql.trim().length == 0) {
             console.error("unknown query: undefined or blank");
             return false;
         }
-        sql = convertVariables(semicolonToBlank(sql), variables);
+        sql = convertVariables(sql, variables);
         let complementSql = paritqlComplement(sql);
         if (complementSql == undefined) {
             console.error("partiql syntax error %s", originSQL);
@@ -614,12 +615,17 @@ async function executeTruncateTable(
 async function executeCommand(
     db: DynamoDBAccessor,
     cmd: string,
-    option: OptionType
+    option: OptionType,
+    nextToken: string | undefined
 ): Promise<boolean> {
     let ret = false;
     if (DEBUG) {
         console.log("----EXECUTE COMMAND----");
         console.log(cmd);
+    }
+    if (cmd == undefined || cmd.trim().length == 0) {
+        console.error("unknown query: undefined or blank");
+        return false;
     }
     if (cmd[0] == "@") {
         ret = await executeVariable(cmd);
@@ -635,9 +641,9 @@ async function executeCommand(
         ret = await executeTruncateTable(db, cmd);
     } else if (cmd.startsWith("run") || cmd.startsWith("RUN")) {
         let latestCmd = historyList.slice(-1)[0];
-        ret = await executePartiQL(db, latestCmd, option, currentNextToken);
+        ret = await executeCommand(db, latestCmd, option, currentNextToken);
     } else {
-        ret = await executePartiQL(db, cmd, option, undefined);
+        ret = await executePartiQL(db, cmd, option, nextToken);
     }
     return ret;
 }
@@ -945,7 +951,7 @@ async function mainLoop(
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            const ok = await executeCommand(db, command, option);
+            const ok = await executeCommand(db, command, option, undefined);
             if (!ok && scriptMode && !option.nostop) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
