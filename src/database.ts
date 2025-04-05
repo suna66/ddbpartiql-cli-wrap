@@ -80,11 +80,13 @@ export default class DynamoDBAccessor {
 
     async execute(
         sql: string,
-        limit: number
+        limit: number | undefined,
+        nextToken: string | undefined
     ): Promise<ExecuteStatementCommandOutput> {
         const statement = new ExecuteStatementCommand({
             Statement: sql,
-            Limit: limit > 0 ? limit : undefined,
+            Limit: limit != undefined && limit > 0 ? limit : undefined,
+            NextToken: nextToken,
         });
         const response = await this.docClient.send(statement);
 

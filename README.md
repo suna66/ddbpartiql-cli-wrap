@@ -49,6 +49,11 @@ ddbql> insert into "ddb-test-table" value {'id': 10, 'name': 'name1','age': 20};
 ddbql> select * from "ddb-test-table";
 ```
 
+You can also use the LIMIT clause.
+```bash
+ddbql> select * from "ddb-test-table" limit 5;
+```
+
 #### Select for INDEX
 
 ```bash
@@ -139,6 +144,13 @@ ddbql> select * from "${variable}"
     --secret_access_key {value} aws credential secret access key
     ```
 - `. {script file}`   : load script file
+
+#### Other Commands
+
+- !?             show command list
+- !h             show execute query history
+- !v             show variables and values
+- !!             re-run previouse query(if previous query returned NextToken, retrying query will add the NextToken)
 
 
 ## Copyright and Disclaimer

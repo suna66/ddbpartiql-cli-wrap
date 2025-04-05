@@ -30,13 +30,15 @@ import { paritqlComplement } from "./complement";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
+let currentNextToken: string | undefined = undefined;
 const scriptList: Array<FileReader> = [];
 
 const promptLabel = "ddbql> ";
 const promptCmdHelp = `
-  !?             show help message
+  !?             show command list
   !h             show execute query history
   !v             show variables and values
+  !!             re-run previouse query(if previous query returned NextToken, retrying query will add the NextToken)
   clear          clear console
   exit           exit ddbql cli
 `;
@@ -87,6 +89,8 @@ function checkPromptCmd(cmd: string): InputType {
             return InputType.TYPE_SHOW_VARIABLES;
         case "?":
             return InputType.TYPE_SHOW_HELP;
+        case "!":
+            return InputType.TYPE_RE_RUN;
         default:
             break;
     }
@@ -124,11 +128,17 @@ function addHistory(cmd: string) {
 async function executePartiQL(
     db: DynamoDBAccessor,
     sql: string,
-    option: OptionType
+    option: OptionType,
+    nextToken: string
 ): Promise<boolean> {
     try {
         let originSQL = sql;
-        sql = convertVariables(semicolonToBlank(sql), variables);
+        sql = semicolonToBlank(sql);
+        if (sql == undefined || sql.trim().length == 0) {
+            console.error("unknown query: undefined or blank");
+            return false;
+        }
+        sql = convertVariables(sql, variables);
         let complementSql = paritqlComplement(sql);
         if (complementSql == undefined) {
             console.error("partiql syntax error %s", originSQL);
@@ -137,11 +147,13 @@ async function executePartiQL(
         if (DEBUG) console.log(complementSql);
         const response = await db.execute(
             complementSql.sql,
-            complementSql.limit
+            complementSql.limit,
+            nextToken
         );
         if (DEBUG) console.log("%o", response);
 
         if (response != undefined) {
+            currentNextToken = undefined;
             const meta = response["$metadata"];
             console.log("http status code: ", meta.httpStatusCode);
             if (response.Items != undefined) {
@@ -155,6 +167,7 @@ async function executePartiQL(
                 console.log(JSON.stringify(response.LastEvaluatedKey, null, 2));
             }
             if (response.NextToken != undefined) {
+                currentNextToken = response.NextToken;
                 console.log("NextToken: %s", response.NextToken);
             }
         }
@@ -605,12 +618,17 @@ async function executeTruncateTable(
 async function executeCommand(
     db: DynamoDBAccessor,
     cmd: string,
-    option: OptionType
+    option: OptionType,
+    nextToken: string | undefined
 ): Promise<boolean> {
     let ret = false;
     if (DEBUG) {
         console.log("----EXECUTE COMMAND----");
         console.log(cmd);
+    }
+    if (cmd == undefined || cmd.trim().length == 0) {
+        console.error("unknown query: undefined or blank");
+        return false;
     }
     if (cmd[0] == "@") {
         ret = await executeVariable(cmd);
@@ -625,7 +643,7 @@ async function executeCommand(
     } else if (cmd.startsWith("truncate") || cmd.startsWith("TRUNCATE")) {
         ret = await executeTruncateTable(db, cmd);
     } else {
-        ret = await executePartiQL(db, cmd, option);
+        ret = await executePartiQL(db, cmd, option, nextToken);
     }
     return ret;
 }
@@ -717,6 +735,8 @@ async function optionFunction(
         case InputType.TYPE_SHOW_HELP:
             console.log(promptCmdHelp);
             break;
+        case InputType.TYPE_RE_RUN:
+            return AnalysisType.TYPE_RE_RUN;
         default:
             break;
     }
@@ -894,46 +914,62 @@ async function mainLoop(
         if (input.length == 0) {
             continue;
         }
-        const type = checkInput(input);
+        let type = checkInput(input);
         if (type == InputType.TYPE_COMMENT) continue;
 
-        let analysisRes = await analysisCommand(input, option);
-        if (analysisRes != 0) {
-            switch (analysisRes) {
-                case AnalysisType.TYPE_VIEW:
-                    console.log(command);
-                    continue;
-                case AnalysisType.TYPE_CLEAR:
-                    if (DEBUG) console.log("----CLEAR----");
-                    console.clear();
-                    command = "";
-                    continue;
-                case AnalysisType.TYPE_END:
-                    if (DEBUG) console.log("----END----");
-                    return 0;
-                case AnalysisType.TYPE_SKIP:
-                    continue;
-                case AnalysisType.TYPE_RECONNECT:
-                    if (DEBUG) console.log("----RECONNECT----");
-                    command = "";
-                    db = initDynamoDBAccessor(option);
-                    continue;
-                case AnalysisType.TYPE_ERROR:
-                    if (scriptMode && !option.nostop) {
-                        if (DEBUG) console.error("error for script mode");
-                        return -1;
-                    }
-                    command = "";
-                    continue;
-                default:
-                    break;
+        if (type != InputType.TYPE_RUN) {
+            let analysisRes = await analysisCommand(input, option);
+            if (analysisRes != 0) {
+                switch (analysisRes) {
+                    case AnalysisType.TYPE_VIEW:
+                        console.log(command);
+                        continue;
+                    case AnalysisType.TYPE_CLEAR:
+                        if (DEBUG) console.log("----CLEAR----");
+                        console.clear();
+                        command = "";
+                        continue;
+                    case AnalysisType.TYPE_END:
+                        if (DEBUG) console.log("----END----");
+                        return 0;
+                    case AnalysisType.TYPE_SKIP:
+                        continue;
+                    case AnalysisType.TYPE_RECONNECT:
+                        if (DEBUG) console.log("----RECONNECT----");
+                        command = "";
+                        db = initDynamoDBAccessor(option);
+                        continue;
+                    case AnalysisType.TYPE_RE_RUN:
+                        if (DEBUG) console.log("-----RERUN-----");
+                        command = "";
+                        input = historyList.slice(-1)[0];
+                        type = InputType.TYPE_RUN;
+                        break;
+                    case AnalysisType.TYPE_ERROR:
+                        if (scriptMode && !option.nostop) {
+                            if (DEBUG) console.error("error for script mode");
+                            return -1;
+                        }
+                        command = "";
+                        continue;
+                    default:
+                        break;
+                }
             }
+        } else {
+            // New execute query
+            currentNextToken = undefined;
         }
 
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            const ok = await executeCommand(db, command, option);
+            const ok = await executeCommand(
+                db,
+                command,
+                option,
+                currentNextToken
+            );
             if (!ok && scriptMode && !option.nostop) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;
