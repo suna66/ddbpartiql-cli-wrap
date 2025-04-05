@@ -27,7 +27,6 @@ import { AttributeValue, KeyType } from "@aws-sdk/client-dynamodb";
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { paritqlComplement } from "./complement";
-import { unescape } from "node:querystring";
 
 let variables: { [key: string]: string | undefined } = {};
 let historyList: Array<string> = [];
