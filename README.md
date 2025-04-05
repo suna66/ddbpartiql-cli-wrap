@@ -145,7 +145,7 @@ ddbql> select * from "${variable}"
     ```
 - `. {script file}`   : load script file
 
-#### Ohter Commands
+#### Other Commands
 
 - !?             show command list
 - !h             show execute query history
