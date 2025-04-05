@@ -35,9 +35,10 @@ const scriptList: Array<FileReader> = [];
 
 const promptLabel = "ddbql> ";
 const promptCmdHelp = `
-  !?             show help message
+  !?             show command list
   !h             show execute query history
   !v             show variables and values
+  !!             re-run previouse query(if previous query returned NextToken, retrying query will add the NextToken)
   clear          clear console
   exit           exit ddbql cli
 `;
@@ -88,6 +89,8 @@ function checkPromptCmd(cmd: string): InputType {
             return InputType.TYPE_SHOW_VARIABLES;
         case "?":
             return InputType.TYPE_SHOW_HELP;
+        case "!":
+            return InputType.TYPE_RE_RUN;
         default:
             break;
     }
@@ -129,7 +132,6 @@ async function executePartiQL(
     nextToken: string
 ): Promise<boolean> {
     try {
-        currentNextToken = undefined;
         let originSQL = sql;
         sql = semicolonToBlank(sql);
         if (sql == undefined || sql.trim().length == 0) {
@@ -151,6 +153,7 @@ async function executePartiQL(
         if (DEBUG) console.log("%o", response);
 
         if (response != undefined) {
+            currentNextToken = undefined;
             const meta = response["$metadata"];
             console.log("http status code: ", meta.httpStatusCode);
             if (response.Items != undefined) {
@@ -639,9 +642,6 @@ async function executeCommand(
         ret = await executeShowTables(db, cmd);
     } else if (cmd.startsWith("truncate") || cmd.startsWith("TRUNCATE")) {
         ret = await executeTruncateTable(db, cmd);
-    } else if (cmd.startsWith("run") || cmd.startsWith("RUN")) {
-        let latestCmd = historyList.slice(-1)[0];
-        ret = await executeCommand(db, latestCmd, option, currentNextToken);
     } else {
         ret = await executePartiQL(db, cmd, option, nextToken);
     }
@@ -735,6 +735,8 @@ async function optionFunction(
         case InputType.TYPE_SHOW_HELP:
             console.log(promptCmdHelp);
             break;
+        case InputType.TYPE_RE_RUN:
+            return AnalysisType.TYPE_RE_RUN;
         default:
             break;
     }
@@ -912,7 +914,7 @@ async function mainLoop(
         if (input.length == 0) {
             continue;
         }
-        const type = checkInput(input);
+        let type = checkInput(input);
         if (type == InputType.TYPE_COMMENT) continue;
 
         let analysisRes = await analysisCommand(input, option);
@@ -936,6 +938,12 @@ async function mainLoop(
                     command = "";
                     db = initDynamoDBAccessor(option);
                     continue;
+                case AnalysisType.TYPE_RE_RUN:
+                    if (DEBUG) console.log("-----RERUN-----");
+                    command = "";
+                    input = historyList.slice(-1)[0];
+                    type = InputType.TYPE_RUN;
+                    break;
                 case AnalysisType.TYPE_ERROR:
                     if (scriptMode && !option.nostop) {
                         if (DEBUG) console.error("error for script mode");
@@ -951,7 +959,12 @@ async function mainLoop(
         command += input;
         command += DELIMITTER;
         if (type == InputType.TYPE_RUN) {
-            const ok = await executeCommand(db, command, option, undefined);
+            const ok = await executeCommand(
+                db,
+                command,
+                option,
+                currentNextToken
+            );
             if (!ok && scriptMode && !option.nostop) {
                 if (DEBUG) console.error("error for script mode");
                 return -1;

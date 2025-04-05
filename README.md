@@ -105,14 +105,6 @@ ddbpq> truncate table "test-table";
 ddbql> drop table "test-table";
 ```
 
-#### Re-execute previous query(extension query)
-
-```bash
-ddbql> run;
-```
-This query adds the NextToken, if  previous query returned NextToken from DynamoDB.
-Therefore, if you want to retrieve the remaining data, you can use this command.
-
 #### Clear prompt
 
 ```bash
@@ -152,6 +144,13 @@ ddbql> select * from "${variable}"
     --secret_access_key {value} aws credential secret access key
     ```
 - `. {script file}`   : load script file
+
+#### Ohter Commands
+
+- !?             show command list
+- !h             show execute query history
+- !v             show variables and values
+- !!             re-run previouse query(if previous query returned NextToken, retrying query will add the NextToken)
 
 
 ## Copyright and Disclaimer

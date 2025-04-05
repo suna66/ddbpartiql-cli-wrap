@@ -18,6 +18,7 @@ export enum InputType {
     TYPE_SHOW_CURRENT_CMD = 11,
     TYPE_SHOW_VARIABLES = 12,
     TYPE_SHOW_HELP = 13,
+    TYPE_RE_RUN = 14,
     TYPE_UNKNOWN = -1,
 }
 
@@ -27,6 +28,7 @@ export enum AnalysisType {
     TYPE_CLEAR = 2,
     TYPE_SKIP = 3,
     TYPE_RECONNECT = 4,
+    TYPE_RE_RUN = 5,
     TYPE_END = 9,
     TYPE_ERROR = 99,
 }
