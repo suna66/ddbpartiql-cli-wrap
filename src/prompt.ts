@@ -917,43 +917,48 @@ async function mainLoop(
         let type = checkInput(input);
         if (type == InputType.TYPE_COMMENT) continue;
 
-        let analysisRes = await analysisCommand(input, option);
-        if (analysisRes != 0) {
-            switch (analysisRes) {
-                case AnalysisType.TYPE_VIEW:
-                    console.log(command);
-                    continue;
-                case AnalysisType.TYPE_CLEAR:
-                    if (DEBUG) console.log("----CLEAR----");
-                    console.clear();
-                    command = "";
-                    continue;
-                case AnalysisType.TYPE_END:
-                    if (DEBUG) console.log("----END----");
-                    return 0;
-                case AnalysisType.TYPE_SKIP:
-                    continue;
-                case AnalysisType.TYPE_RECONNECT:
-                    if (DEBUG) console.log("----RECONNECT----");
-                    command = "";
-                    db = initDynamoDBAccessor(option);
-                    continue;
-                case AnalysisType.TYPE_RE_RUN:
-                    if (DEBUG) console.log("-----RERUN-----");
-                    command = "";
-                    input = historyList.slice(-1)[0];
-                    type = InputType.TYPE_RUN;
-                    break;
-                case AnalysisType.TYPE_ERROR:
-                    if (scriptMode && !option.nostop) {
-                        if (DEBUG) console.error("error for script mode");
-                        return -1;
-                    }
-                    command = "";
-                    continue;
-                default:
-                    break;
+        if (type != InputType.TYPE_RUN) {
+            let analysisRes = await analysisCommand(input, option);
+            if (analysisRes != 0) {
+                switch (analysisRes) {
+                    case AnalysisType.TYPE_VIEW:
+                        console.log(command);
+                        continue;
+                    case AnalysisType.TYPE_CLEAR:
+                        if (DEBUG) console.log("----CLEAR----");
+                        console.clear();
+                        command = "";
+                        continue;
+                    case AnalysisType.TYPE_END:
+                        if (DEBUG) console.log("----END----");
+                        return 0;
+                    case AnalysisType.TYPE_SKIP:
+                        continue;
+                    case AnalysisType.TYPE_RECONNECT:
+                        if (DEBUG) console.log("----RECONNECT----");
+                        command = "";
+                        db = initDynamoDBAccessor(option);
+                        continue;
+                    case AnalysisType.TYPE_RE_RUN:
+                        if (DEBUG) console.log("-----RERUN-----");
+                        command = "";
+                        input = historyList.slice(-1)[0];
+                        type = InputType.TYPE_RUN;
+                        break;
+                    case AnalysisType.TYPE_ERROR:
+                        if (scriptMode && !option.nostop) {
+                            if (DEBUG) console.error("error for script mode");
+                            return -1;
+                        }
+                        command = "";
+                        continue;
+                    default:
+                        break;
+                }
             }
+        } else {
+            // New execute query
+            currentNextToken = undefined;
         }
 
         command += input;
