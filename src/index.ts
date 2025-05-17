@@ -2,7 +2,7 @@ import { Prompt } from "./prompt";
 import { OptionType } from "./types";
 import { parseArgs } from "node:util";
 
-const VERSION = "0.5.1";
+const VERSION = "0.5.2";
 const help = `
 version: ${VERSION}
 ddbql [OPTIONS] [scritp file]

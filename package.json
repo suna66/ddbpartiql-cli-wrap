@@ -1,7 +1,7 @@
 {
   "name": "@suna66/ddbpartiql-wrap",
   "description": "partiql cli for dynamodb",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "author": "suna66",
   "bin": {
     "ddbql": "bin/cli.js"
@@ -21,6 +21,7 @@
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-loader": "^9.5.2",
     "tslib": "^2.8.1",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2"
   },
   "files": [
